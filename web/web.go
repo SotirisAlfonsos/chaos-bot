@@ -22,17 +22,24 @@ func NewGrpcHandler(port string, logger log.Logger) *GrpcHandler {
 }
 
 func (h *GrpcHandler) Run() error {
-	level.Info(h.Logger).Log("msg", "starting web server on port "+h.Port)
+	_ = level.Info(h.Logger).Log("msg", "starting web server on port "+h.Port)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", h.Port))
 	if err != nil {
 		return err
 	}
-	proto.RegisterHealthServer(h.grpcServer, &api.HealthCheckService{})
+
+	h.registerServices()
+
 	if err := h.grpcServer.Serve(lis); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (h *GrpcHandler) registerServices() {
+	proto.RegisterHealthServer(h.grpcServer, &api.HealthCheckService{})
+	proto.RegisterServiceServer(h.grpcServer, &api.ServiceManager{})
 }
 
 func (h *GrpcHandler) Stop() {
