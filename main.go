@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/patrickmn/go-cache"
 )
 
 func main() {
@@ -15,7 +16,9 @@ func main() {
 	flag.Parse()
 
 	logger := createLogger(*debugLevel)
-	grpcHandler := web.NewGrpcHandler(*port, logger)
+	myCache := cache.New(0, 0)
+
+	grpcHandler := web.NewGrpcHandler(*port, logger, myCache)
 	if err := grpcHandler.Run(); err != nil {
 		level.Error(logger).Log("msg", "Failed to start Grpc server on port "+*port, "err", err)
 	}

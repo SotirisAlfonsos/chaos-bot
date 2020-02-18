@@ -1,10 +1,6 @@
 package common
 
-import (
-	"chaos-slave/proto"
-)
-
 type Target interface {
-	Start() (*proto.StatusResponse, error)
-	Stop() (*proto.StatusResponse, error)
+	Start(name string) (string, error)
+	Stop(name string) (string, error)
 }

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"chaos-slave/proto"
 	"fmt"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -10,58 +9,45 @@ import (
 )
 
 type Service struct {
-	Logger     log.Logger
-	Name string
+	Logger log.Logger
 }
 
-func (s *Service) Start() (*proto.StatusResponse, error) {
-	dmn, err := daemon.New(s.Name, "")
+func (s *Service) Start(name string) (string, error) {
+	dmn, err := daemon.New(name, "")
 	if err != nil {
-		return respFail("Could not instantiate daemon", err)
+		_ = level.Error(s.Logger).Log("msg", "Could not instantiate daemon", "err", err)
+		return "Could not instantiate daemon", err
 	}
 
-	_, err = dmn.Start()
-	if err != nil {
-		return respFail(fmt.Sprintf("Could not start service %s",s.Name), err)
+	_, startErr := dmn.Start()
+	if startErr != nil {
+		_ = level.Error(s.Logger).Log("msg", fmt.Sprintf("Could not start service %s", name), "err", startErr)
+		return fmt.Sprintf("Could not start service %s", name), startErr
 	}
 
-	return respSuccess(s.constructMessage("started"))
+	return constructMessage(s.Logger, "started", name), nil
 }
 
-func (s *Service) Stop() (*proto.StatusResponse, error) {
-	dmn, err := daemon.New(s.Name, "")
+func (s *Service) Stop(name string) (string, error) {
+	dmn, err := daemon.New(name, "")
 	if err != nil {
-		return respFail("Could not instantiate daemon", err)
+		return "Could not instantiate daemon", err
 	}
 
 	_, err = dmn.Stop()
 	if err != nil {
-		return respFail(fmt.Sprintf("Could not stop service %s",s.Name), err)
+		return fmt.Sprintf("Could not stop service %s", name), err
 	}
 
-	return respSuccess(s.constructMessage("stopped"))
+	return constructMessage(s.Logger, "stopped", name), nil
 }
 
-func (s *Service) constructMessage(action string) string {
+func constructMessage(logger log.Logger, action string, name string) string {
 	hostname, err := os.Hostname()
 	if err != nil {
-		_ = level.Warn(s.Logger).Log("msg", "Could not get hostname", "err", err)
+		_ = level.Warn(logger).Log("msg", "Could not get hostname", "err", err)
 		hostname = "Unknown"
 	}
 
-	return fmt.Sprintf("Slave %s %s service %s", hostname, action, s.Name)
-}
-
-func respFail(message string, err error) (*proto.StatusResponse, error){
-	return &proto.StatusResponse{
-		Status: proto.StatusResponse_FAIL,
-		Message: message,
-	}, err
-}
-
-func respSuccess(message string) (*proto.StatusResponse, error){
-	return &proto.StatusResponse{
-		Status: proto.StatusResponse_SUCCESS,
-		Message: message,
-	}, nil
+	return fmt.Sprintf("Slave %s %s service %s", hostname, action, name)
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"testing"
@@ -121,9 +122,9 @@ func TestStopServiceGrpcSuccess(t *testing.T) {
 	assert.NotNil(t, resp.Message)
 }
 
-
 func withTestGrpcServer(port string, done chan struct{}, errOnGrpcHandlerRun chan error) {
-	grpcHandler := NewGrpcHandler(port, logger)
+	myCache := cache.New(0, 0)
+	grpcHandler := NewGrpcHandler(port, logger, myCache)
 	go func(errOnGrpcHandlerRun chan error) {
 		if err := grpcHandler.Run(); err != nil {
 			errOnGrpcHandlerRun <- err
@@ -134,10 +135,8 @@ func withTestGrpcServer(port string, done chan struct{}, errOnGrpcHandlerRun cha
 	time.Sleep(2 * time.Second)
 
 	go func(done chan struct{}) {
-		select {
-		case <-done:
-			grpcHandler.Stop()
-		}
+		<-done
+		grpcHandler.Stop()
 	}(done)
 }
 

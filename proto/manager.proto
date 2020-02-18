@@ -4,14 +4,16 @@ package proto;
 
 service Service {
     rpc Start(ServiceRequest) returns (StatusResponse);
-
     rpc Stop(ServiceRequest) returns (StatusResponse);
 }
 
 service Docker {
     rpc Start(DockerRequest) returns (StatusResponse);
-
     rpc Stop(DockerRequest) returns (StatusResponse);
+}
+
+service Strategy {
+    rpc Recover(RecoverRequest) returns (ResolveResponse);
 }
 
 message ServiceRequest {
@@ -22,6 +24,9 @@ message DockerRequest {
     string name = 1;
 }
 
+message RecoverRequest {
+}
+
 message StatusResponse {
     enum Status{
         SUCCESS = 0;
@@ -29,4 +34,8 @@ message StatusResponse {
     }
     Status status = 1;
     string message = 2;
+}
+
+message ResolveResponse {
+    repeated StatusResponse response = 1;
 }
