@@ -2,11 +2,12 @@ package v1
 
 import (
 	"chaos-slave/common"
-	. "chaos-slave/common/docker"
-	. "chaos-slave/common/service"
+	"chaos-slave/common/docker"
+	"chaos-slave/common/service"
 	"chaos-slave/proto"
 	"context"
 	"fmt"
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/patrickmn/go-cache"
@@ -18,17 +19,19 @@ import (
 type HealthCheckService struct {
 }
 
+//Check the health of the slave
 func (hcs *HealthCheckService) Check(ctx context.Context, req *proto.HealthCheckRequest) (*proto.HealthCheckResponse, error) {
 	return &proto.HealthCheckResponse{Status: proto.HealthCheckResponse_SERVING}, nil
 }
 
+//Watch is not used at the moment
 func (hcs *HealthCheckService) Watch(req *proto.HealthCheckRequest, srv proto.Health_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
 }
 
 type ServiceManager struct {
 	Cache   *cache.Cache
-	Service *Service
+	Service *service.Service
 }
 
 func (sm *ServiceManager) Start(ctx context.Context, req *proto.ServiceRequest) (*proto.StatusResponse, error) {
@@ -36,6 +39,7 @@ func (sm *ServiceManager) Start(ctx context.Context, req *proto.ServiceRequest) 
 	if err == nil {
 		sm.Cache.Delete(req.Name)
 	}
+
 	return prepareResponse(message, err)
 }
 
@@ -46,12 +50,13 @@ func (sm *ServiceManager) Stop(ctx context.Context, req *proto.ServiceRequest) (
 			_ = level.Error(sm.Service.Logger).Log("msg", "Could not update cache after stopping service", "err", cacheErr)
 		}
 	}
+
 	return prepareResponse(message, err)
 }
 
 type DockerManager struct {
 	Cache  *cache.Cache
-	Docker *Docker
+	Docker *docker.Docker
 }
 
 func (sm *DockerManager) Start(ctx context.Context, req *proto.DockerRequest) (*proto.StatusResponse, error) {
@@ -69,7 +74,9 @@ type StrategyManager struct {
 
 func (sm *StrategyManager) Recover(ctx context.Context, req *proto.RecoverRequest) (*proto.ResolveResponse, error) {
 	var responses []*proto.StatusResponse
+
 	var err error = nil
+
 	for item := range sm.Cache.Items() {
 		target, ok := sm.Cache.Get(item)
 		if !ok {
@@ -91,6 +98,7 @@ func (sm *StrategyManager) Recover(ctx context.Context, req *proto.RecoverReques
 
 		responses = append(responses, resp)
 	}
+
 	return &proto.ResolveResponse{Response: responses}, err
 }
 
@@ -98,6 +106,7 @@ func prepareResponse(message string, err error) (*proto.StatusResponse, error) {
 	if err != nil {
 		return respFail(message, err)
 	}
+
 	return respSuccess(message)
 }
 

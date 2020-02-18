@@ -1,11 +1,12 @@
 package chaoslogger
 
 import (
+	"os"
+	"time"
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/pkg/errors"
-	"os"
-	"time"
 )
 
 var (
@@ -39,17 +40,19 @@ func (l *AllowedLevel) Set(s string) error {
 	default:
 		return errors.Errorf("unrecognized log level " + s)
 	}
+
 	l.s = s
+
 	return nil
 }
 
 // New returns a new leveled oklog logger. Each logged line will be annotated
 // with a timestamp. The output always goes to stderr.
 func New(allowedLevel *AllowedLevel) log.Logger {
-
 	l := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
 
 	l = level.NewFilter(l, allowedLevel.o)
 	l = log.With(l, "ts", timestampFormat, "caller", log.DefaultCaller)
+
 	return l
 }

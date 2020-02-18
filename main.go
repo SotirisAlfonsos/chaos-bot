@@ -5,6 +5,7 @@ import (
 	"chaos-slave/web"
 	"flag"
 	"fmt"
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/patrickmn/go-cache"
@@ -20,7 +21,7 @@ func main() {
 
 	grpcHandler := web.NewGrpcHandler(*port, logger, myCache)
 	if err := grpcHandler.Run(); err != nil {
-		level.Error(logger).Log("msg", "Failed to start Grpc server on port "+*port, "err", err)
+		_ = level.Error(logger).Log("msg", "Failed to start Grpc server on port "+*port, "err", err)
 	}
 }
 
@@ -29,5 +30,6 @@ func createLogger(debugLevel string) log.Logger {
 	if err := allowLevel.Set(debugLevel); err != nil {
 		fmt.Printf("%v", err)
 	}
+	
 	return chaoslogger.New(allowLevel)
 }

@@ -6,11 +6,12 @@ import (
 	"chaos-slave/proto"
 	"context"
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/go-kit/kit/log"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
 var (
@@ -20,6 +21,7 @@ var (
 func TestHealthCheckService_Check(t *testing.T) {
 	hcs := &HealthCheckService{}
 	resp, err := hcs.Check(context.TODO(), &proto.HealthCheckRequest{})
+
 	if err != nil {
 		t.Fatalf("Error on Health Check request. err=%s", err)
 	}
@@ -39,8 +41,9 @@ func TestServiceManager_e2e(t *testing.T) {
 
 	sm := &ServiceManager{myCache, &service.Service{Logger: logger}}
 	stratM := &StrategyManager{logger, myCache}
+
 	startService(sm, serviceName, t, hostname)
-	startServiceFail(sm, serviceName, t, hostname)
+	startServiceFail(sm, serviceName, t)
 	recoverServiceEmpty(stratM, serviceName, t)
 	stopService(sm, serviceName, t, hostname)
 	recoverService(stratM, serviceName, t, hostname)
@@ -54,21 +57,23 @@ func startService(sm *ServiceManager, serviceName string, t *testing.T, hostname
 	}
 
 	expectedMessage := fmt.Sprintf("Slave %s started service %s", hostname, serviceName)
+	_, ok := sm.Cache.Get(serviceName)
+
 	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)
-	_, ok := sm.Cache.Get(serviceName)
 	assert.False(t, ok)
 	assert.Equal(t, 0, sm.Cache.ItemCount())
 }
 
-func startServiceFail(sm *ServiceManager, serviceName string, t *testing.T, hostname string) {
+func startServiceFail(sm *ServiceManager, serviceName string, t *testing.T) {
 	resp, err := sm.Start(context.TODO(), &proto.ServiceRequest{Name: serviceName})
 
 	expectedMessage := fmt.Sprintf("Could not start service %s", serviceName)
+	_, ok := sm.Cache.Get(serviceName)
+
 	assert.Error(t, err)
 	assert.Equal(t, proto.StatusResponse_FAIL, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)
-	_, ok := sm.Cache.Get(serviceName)
 	assert.False(t, ok)
 	assert.Equal(t, 0, sm.Cache.ItemCount())
 }
@@ -80,12 +85,14 @@ func stopService(sm *ServiceManager, serviceName string, t *testing.T, hostname 
 	}
 
 	expectedMessage := fmt.Sprintf("Slave %s stopped service %s", hostname, serviceName)
-	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
-	assert.Equal(t, expectedMessage, resp.Message)
 	serviceObj, ok := sm.Cache.Get(serviceName)
+
 	if !ok {
 		t.Fatalf(fmt.Sprintf("Could not retrieve item %s from cache", serviceName))
 	}
+
+	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
+	assert.Equal(t, expectedMessage, resp.Message)
 	assert.Equal(t, sm.Service, serviceObj)
 }
 
@@ -96,9 +103,10 @@ func recoverService(sm *StrategyManager, serviceName string, t *testing.T, hostn
 	}
 
 	expectedMessage := fmt.Sprintf("Slave %s started service %s", hostname, serviceName)
+	_, ok := sm.Cache.Get(serviceName)
+
 	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Response[0].Status)
 	assert.Equal(t, expectedMessage, resp.Response[0].Message)
-	_, ok := sm.Cache.Get(serviceName)
 	assert.False(t, ok)
 	assert.Equal(t, 0, sm.Cache.ItemCount())
 }
@@ -109,8 +117,9 @@ func recoverServiceEmpty(sm *StrategyManager, serviceName string, t *testing.T) 
 		t.Fatalf("Error in Service Recover request. err=%s", err)
 	}
 
-	assert.Equal(t, 0, len(resp.Response))
 	_, ok := sm.Cache.Get(serviceName)
+
+	assert.Equal(t, 0, len(resp.Response))
 	assert.False(t, ok)
 	assert.Equal(t, 0, sm.Cache.ItemCount())
 }
@@ -169,5 +178,6 @@ func getLogger() log.Logger {
 	if err := allowLevel.Set("debug"); err != nil {
 		fmt.Printf("%v", err)
 	}
+
 	return chaoslogger.New(allowLevel)
 }

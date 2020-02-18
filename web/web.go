@@ -6,11 +6,12 @@ import (
 	"chaos-slave/proto"
 	api "chaos-slave/web/api/v1"
 	"fmt"
+	"net"
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/patrickmn/go-cache"
 	"google.golang.org/grpc"
-	"net"
 )
 
 type GrpcHandler struct {
@@ -38,6 +39,7 @@ func (h *GrpcHandler) Run() error {
 	if err := h.grpcServer.Serve(lis); err != nil {
 		return err
 	}
+
 	return nil
 }
 

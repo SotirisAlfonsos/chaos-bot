@@ -5,13 +5,14 @@ import (
 	"chaos-slave/proto"
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
-	"testing"
-	"time"
 )
 
 var (
@@ -19,9 +20,10 @@ var (
 )
 
 func TestHealthCheckGrpcCheckSuccess(t *testing.T) {
+	const port = "8080"
+
 	done := make(chan struct{})
 	errOnGrpcHandlerRun := make(chan error)
-	port := "8080"
 
 	withTestGrpcServer(port, done, errOnGrpcHandlerRun)
 
@@ -34,6 +36,7 @@ func TestHealthCheckGrpcCheckSuccess(t *testing.T) {
 	resp := performHChReqOnCheck(client)
 
 	done <- struct{}{}
+
 	clientConn.Close()
 
 	assert.NotNil(t, resp)
@@ -43,9 +46,10 @@ func TestHealthCheckGrpcCheckSuccess(t *testing.T) {
 }
 
 func TestHealthCheckGrpcCheckInvalidPort(t *testing.T) {
+	const port = "-1"
+
 	done := make(chan struct{})
 	errOnGrpcHandlerRun := make(chan error)
-	port := "-1"
 
 	withTestGrpcServer(port, done, errOnGrpcHandlerRun)
 
@@ -58,6 +62,7 @@ func TestHealthCheckGrpcCheckInvalidPort(t *testing.T) {
 	resp := performHChReqOnCheck(client)
 
 	done <- struct{}{}
+
 	clientConn.Close()
 
 	assert.Nil(t, resp)
@@ -70,9 +75,10 @@ func TestStartServiceGrpcSuccess(t *testing.T) {
 		t.Skip("skipping testing in short mode")
 	}
 
+	const port = "8080"
+
 	done := make(chan struct{})
 	errOnGrpcHandlerRun := make(chan error)
-	port := "8080"
 
 	withTestGrpcServer(port, done, errOnGrpcHandlerRun)
 
@@ -85,6 +91,7 @@ func TestStartServiceGrpcSuccess(t *testing.T) {
 	resp := performStartServiceReq(client)
 
 	done <- struct{}{}
+
 	clientConn.Close()
 
 	assert.Nil(t, err)
@@ -99,9 +106,10 @@ func TestStopServiceGrpcSuccess(t *testing.T) {
 		t.Skip("skipping testing in short mode")
 	}
 
+	const port = "8080"
+
 	done := make(chan struct{})
 	errOnGrpcHandlerRun := make(chan error)
-	port := "8080"
 
 	withTestGrpcServer(port, done, errOnGrpcHandlerRun)
 
@@ -114,6 +122,7 @@ func TestStopServiceGrpcSuccess(t *testing.T) {
 	resp := performStopServiceReq(client)
 
 	done <- struct{}{}
+
 	clientConn.Close()
 
 	assert.Nil(t, err)
@@ -125,6 +134,7 @@ func TestStopServiceGrpcSuccess(t *testing.T) {
 func withTestGrpcServer(port string, done chan struct{}, errOnGrpcHandlerRun chan error) {
 	myCache := cache.New(0, 0)
 	grpcHandler := NewGrpcHandler(port, logger, myCache)
+
 	go func(errOnGrpcHandlerRun chan error) {
 		if err := grpcHandler.Run(); err != nil {
 			errOnGrpcHandlerRun <- err
@@ -154,8 +164,10 @@ func performHChReqOnCheck(client proto.HealthClient) *proto.HealthCheckResponse 
 	resp, err := client.Check(context.Background(), &proto.HealthCheckRequest{})
 	if err != nil {
 		_ = level.Error(logger).Log("msg", "Failed to call the Check method on the Health-check", "err", err)
+
 		return nil
 	}
+
 	return resp
 }
 
@@ -165,6 +177,7 @@ func performStartServiceReq(client proto.ServiceClient) *proto.StatusResponse {
 		_ = level.Error(logger).Log("msg", "Failed to call the Start method on the Service", "err", err)
 		return resp
 	}
+
 	return resp
 }
 
@@ -174,6 +187,7 @@ func performStopServiceReq(client proto.ServiceClient) *proto.StatusResponse {
 		_ = level.Error(logger).Log("msg", "Failed to call the Start method on the Service", "err", err)
 		return resp
 	}
+
 	return resp
 }
 
@@ -182,5 +196,6 @@ func getLogger() log.Logger {
 	if err := allowLevel.Set("debug"); err != nil {
 		fmt.Printf("%v", err)
 	}
+
 	return chaoslogger.New(allowLevel)
 }

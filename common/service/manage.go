@@ -2,10 +2,11 @@ package service
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/takama/daemon"
-	"os"
 )
 
 type Service struct {

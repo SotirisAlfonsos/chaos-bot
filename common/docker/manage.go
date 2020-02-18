@@ -2,9 +2,10 @@ package docker
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"os"
 )
 
 type Docker struct {
