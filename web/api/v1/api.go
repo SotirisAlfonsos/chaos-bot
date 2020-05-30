@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+//HealthCheckService is the rpc
 type HealthCheckService struct {
 }
 
@@ -29,11 +30,13 @@ func (hcs *HealthCheckService) Watch(req *proto.HealthCheckRequest, srv proto.He
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
 }
 
+//ServiceManager is the rpc for services management
 type ServiceManager struct {
 	Cache   *cache.Cache
 	Service *service.Service
 }
 
+//Start a service based on the name. Delete the item from the cache if it had been cached previously
 func (sm *ServiceManager) Start(ctx context.Context, req *proto.ServiceRequest) (*proto.StatusResponse, error) {
 	message, err := sm.Service.Start(req.Name)
 	if err == nil {
@@ -43,6 +46,7 @@ func (sm *ServiceManager) Start(ctx context.Context, req *proto.ServiceRequest) 
 	return prepareResponse(message, err)
 }
 
+//Stop a service based on the name. Cache it if the service is stopped successfully
 func (sm *ServiceManager) Stop(ctx context.Context, req *proto.ServiceRequest) (*proto.StatusResponse, error) {
 	message, err := sm.Service.Stop(req.Name)
 	if err == nil {
@@ -54,24 +58,41 @@ func (sm *ServiceManager) Stop(ctx context.Context, req *proto.ServiceRequest) (
 	return prepareResponse(message, err)
 }
 
+//DockerManager is the rpc for docker management
 type DockerManager struct {
 	Cache  *cache.Cache
 	Docker *docker.Docker
 }
 
+//Start a docker container based on the name. Delete the item from the cache if it had been cached previously
 func (sm *DockerManager) Start(ctx context.Context, req *proto.DockerRequest) (*proto.StatusResponse, error) {
-	return prepareResponse(sm.Docker.Start(req.Name))
+	message, err := sm.Docker.Start(req.Name)
+	if err == nil {
+		sm.Cache.Delete(req.Name)
+	}
+
+	return prepareResponse(message, err)
 }
 
+//Stop a docker container based on the name. Cache it if the docker container is stopped successfully
 func (sm *DockerManager) Stop(ctx context.Context, req *proto.DockerRequest) (*proto.StatusResponse, error) {
-	return prepareResponse(sm.Docker.Stop(req.Name))
+	message, err := sm.Docker.Stop(req.Name)
+	if err == nil {
+		if cacheErr := sm.Cache.Add(req.Name, sm.Docker, 0); cacheErr != nil {
+			_ = level.Error(sm.Docker.Logger).Log("msg", "Could not update cache after stopping service", "err", cacheErr)
+		}
+	}
+
+	return prepareResponse(message, err)
 }
 
+//StrategyManager handles recovery of services
 type StrategyManager struct {
 	Logger log.Logger
 	Cache  *cache.Cache
 }
 
+//Recover all services that are in the cache (have been stopped). Clean cache for every successful recovery
 func (sm *StrategyManager) Recover(ctx context.Context, req *proto.RecoverRequest) (*proto.ResolveResponse, error) {
 	var responses []*proto.StatusResponse
 

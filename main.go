@@ -12,8 +12,16 @@ import (
 )
 
 func main() {
-	debugLevel := flag.String("debug.level", "info", "the debug level for the chaos slave. Can be one of debug, info, warn, error.")
-	port := flag.String("port", "8080", "the port used by the grpc server.")
+	debugLevel := flag.String(
+		"debug.level",
+		"info",
+		"the debug level for the chaos slave. Can be one of debug, info, warn, error.")
+
+	port := flag.String(
+		"port",
+		"8080",
+		"the port used by the grpc server.")
+
 	flag.Parse()
 
 	logger := createLogger(*debugLevel)
@@ -30,6 +38,6 @@ func createLogger(debugLevel string) log.Logger {
 	if err := allowLevel.Set(debugLevel); err != nil {
 		fmt.Printf("%v", err)
 	}
-	
+
 	return chaoslogger.New(allowLevel)
 }

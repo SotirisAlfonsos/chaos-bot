@@ -2,6 +2,7 @@ package v1
 
 import (
 	"chaos-slave/chaoslogger"
+	"chaos-slave/common/docker"
 	"chaos-slave/common/service"
 	"chaos-slave/proto"
 	"context"
@@ -94,6 +95,7 @@ func stopService(sm *ServiceManager, serviceName string, t *testing.T, hostname 
 	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)
 	assert.Equal(t, sm.Service, serviceObj)
+	assert.Equal(t, 1, sm.Cache.ItemCount())
 }
 
 func recoverService(sm *StrategyManager, serviceName string, t *testing.T, hostname string) {
@@ -124,54 +126,77 @@ func recoverServiceEmpty(sm *StrategyManager, serviceName string, t *testing.T) 
 	assert.Equal(t, 0, sm.Cache.ItemCount())
 }
 
-// === End to end testing ===
-//func TestDockerManager_e2e(t *testing.T) {
-//	if testing.Short() {
-//		t.Skip("skipping testing in short mode")
-//	}
-//
-//	serviceName := "dummy"
-//	hostname, _ := os.Hostname()
-//
-//	dm := &DockerManager{logger}
-//	startDocker(dm, serviceName, t, hostname)
-//	stopDocker(dm, serviceName, t, hostname)
-//	recoverDocker(dm, serviceName, t, hostname)
-//	stopDocker(dm, serviceName, t, hostname)
-//}
-//
-//func startDocker(dm *DockerManager, serviceName string, t *testing.T, hostname string) {
-//	resp, err := dm.Start(context.TODO(), &proto.DockerRequest{Name: serviceName})
-//	if err != nil {
-//		t.Fatalf("Error in Docker Start request. err=%s", err)
-//	}
-//
-//	expectedMessage := fmt.Sprintf("Slave %s started docker container %s", hostname, serviceName)
-//	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
-//	assert.Equal(t, expectedMessage, resp.Message)
-//}
-//
-//func stopDocker(dm *DockerManager, serviceName string, t *testing.T, hostname string) {
-//	resp, err := dm.Stop(context.TODO(), &proto.DockerRequest{Name: serviceName})
-//	if err != nil {
-//		t.Fatalf("Error in Docker Stop request. err=%s", err)
-//	}
-//
-//	expectedMessage := fmt.Sprintf("Slave %s stopped docker container %s", hostname, serviceName)
-//	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
-//	assert.Equal(t, expectedMessage, resp.Message)
-//}
-//
-//func recoverDocker(dm *DockerManager, serviceName string, t *testing.T, hostname string) {
-//	resp, err := dm.Recover(context.TODO(), &proto.DockerRequest{Name: serviceName})
-//	if err != nil {
-//		t.Fatalf("Error in Service Start request. err=%s", err)
-//	}
-//
-//	expectedMessage := fmt.Sprintf("Slave %s started docker container %s", hostname, serviceName)
-//	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
-//	assert.Equal(t, expectedMessage, resp.Message)
-//}
+//=== End to end testing ===
+func TestDockerManager_e2e(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping testing in short mode")
+	}
+
+	myCache := cache.New(0, 0)
+	dockerName := "zookeeper"
+	hostname, _ := os.Hostname()
+
+	dm := &DockerManager{myCache, &docker.Docker{Logger: logger}}
+	stratM := &StrategyManager{logger, myCache}
+
+	startDocker(dm, dockerName, t, hostname)
+	recoverDockerEmpty(stratM, dockerName, t, hostname)
+	stopDocker(dm, dockerName, t, hostname)
+	recoverDocker(stratM, dockerName, t, hostname)
+	stopDocker(dm, dockerName, t, hostname)
+}
+
+func startDocker(dm *DockerManager, dockerName string, t *testing.T, hostname string) {
+	resp, err := dm.Start(context.TODO(), &proto.DockerRequest{Name: dockerName})
+	if err != nil {
+		t.Fatalf("Error in Docker Start request. err=%s", err)
+	}
+
+	expectedMessage := fmt.Sprintf("Slave %s started docker container %s", hostname, dockerName)
+
+	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
+	assert.Equal(t, expectedMessage, resp.Message)
+}
+
+func recoverDockerEmpty(sm *StrategyManager, dockerName string, t *testing.T, hostname string) {
+	resp, err := sm.Recover(context.TODO(), &proto.RecoverRequest{})
+	if err != nil {
+		t.Fatalf("Error in Docker recover Start request. err=%s", err)
+	}
+
+	_, ok := sm.Cache.Get(dockerName)
+
+	assert.Equal(t, 0, len(resp.Response))
+	assert.False(t, ok)
+	assert.Equal(t, 0, sm.Cache.ItemCount())
+}
+
+func stopDocker(dm *DockerManager, dockerName string, t *testing.T, hostname string) {
+	resp, err := dm.Stop(context.TODO(), &proto.DockerRequest{Name: dockerName})
+	if err != nil {
+		t.Fatalf("Error in Docker Stop request. err=%s", err)
+	}
+
+	expectedMessage := fmt.Sprintf("Slave %s stopped docker container %s", hostname, dockerName)
+
+	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
+	assert.Equal(t, expectedMessage, resp.Message)
+}
+
+func recoverDocker(sm *StrategyManager, dockerName string, t *testing.T, hostname string) {
+	resp, err := sm.Recover(context.TODO(), &proto.RecoverRequest{})
+	if err != nil {
+		t.Fatalf("Error in Docker recover Start request. err=%s", err)
+	}
+
+	expectedMessage := fmt.Sprintf("Slave %s started docker container %s", hostname, dockerName)
+	_, ok := sm.Cache.Get(dockerName)
+
+	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Response[0].Status)
+	assert.Equal(t, expectedMessage, resp.Response[0].Message)
+	assert.False(t, ok)
+	assert.Equal(t, 0, sm.Cache.ItemCount())
+}
 
 func getLogger() log.Logger {
 	allowLevel := &chaoslogger.AllowedLevel{}

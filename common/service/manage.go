@@ -9,10 +9,12 @@ import (
 	"github.com/takama/daemon"
 )
 
+//Service is the interface implementation that manages chaos on services
 type Service struct {
 	Logger log.Logger
 }
 
+//Start will perform a service start on the service specified
 func (s *Service) Start(name string) (string, error) {
 	dmn, err := daemon.New(name, "")
 	if err != nil {
@@ -20,15 +22,17 @@ func (s *Service) Start(name string) (string, error) {
 		return "Could not instantiate daemon", err
 	}
 
-	_, startErr := dmn.Start()
-	if startErr != nil {
+	if _, startErr := dmn.Start(); startErr != nil {
 		_ = level.Error(s.Logger).Log("msg", fmt.Sprintf("Could not start service %s", name), "err", startErr)
 		return fmt.Sprintf("Could not start service %s", name), startErr
 	}
 
+	_ = level.Info(s.Logger).Log("msg", fmt.Sprintf("Started service with name %s", name))
+
 	return constructMessage(s.Logger, "started", name), nil
 }
 
+//Stop will perform a service stop on the service specified
 func (s *Service) Stop(name string) (string, error) {
 	dmn, err := daemon.New(name, "")
 	if err != nil {
@@ -39,6 +43,8 @@ func (s *Service) Stop(name string) (string, error) {
 	if err != nil {
 		return fmt.Sprintf("Could not stop service %s", name), err
 	}
+
+	_ = level.Info(s.Logger).Log("msg", fmt.Sprintf("Stopped service with name %s", name))
 
 	return constructMessage(s.Logger, "stopped", name), nil
 }
