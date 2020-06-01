@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+//GrpcHandler is holding the cache and grpc configuration
 type GrpcHandler struct {
 	Port       string
 	Logger     log.Logger
@@ -21,11 +22,13 @@ type GrpcHandler struct {
 	cache      *cache.Cache
 }
 
+//NewGrpcHandler creates and returns an instance of GrpcHandler
 func NewGrpcHandler(port string, logger log.Logger, cache *cache.Cache) *GrpcHandler {
 	grpcServer := grpc.NewServer()
 	return &GrpcHandler{port, logger, grpcServer, cache}
 }
 
+//Run starts the slave grpc server
 func (h *GrpcHandler) Run() error {
 	_ = level.Info(h.Logger).Log("msg", "starting web server on port "+h.Port)
 
@@ -59,6 +62,7 @@ func (h *GrpcHandler) registerServices() {
 	})
 }
 
+//Stop stops the slave grpc server
 func (h *GrpcHandler) Stop() {
 	h.grpcServer.GracefulStop()
 }

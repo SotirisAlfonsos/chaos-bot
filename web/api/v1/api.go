@@ -96,7 +96,7 @@ type StrategyManager struct {
 func (sm *StrategyManager) Recover(ctx context.Context, req *proto.RecoverRequest) (*proto.ResolveResponse, error) {
 	responses := make([]*proto.StatusResponse, 0)
 
-	var err error = nil
+	var err error
 
 	for item := range sm.Cache.Items() {
 		target, ok := sm.Cache.Get(item)
