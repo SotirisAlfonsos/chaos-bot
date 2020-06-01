@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"chaos-slave/chaoslogger"
 	"chaos-slave/common/docker"
 	"chaos-slave/common/service"
 	"chaos-slave/proto"
@@ -10,13 +9,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
 	"github.com/go-kit/kit/log"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
-)
-
-var (
-	logger = getLogger()
 )
 
 func TestHealthCheckService_Check(t *testing.T) {
@@ -36,6 +32,7 @@ func TestServiceManager_e2e(t *testing.T) {
 		t.Skip("skipping testing in short mode")
 	}
 
+	logger := getLogger()
 	myCache := cache.New(0, 0)
 	serviceName := "simple"
 	hostname, _ := os.Hostname()
@@ -132,6 +129,7 @@ func TestDockerManager_e2e(t *testing.T) {
 		t.Skip("skipping testing in short mode")
 	}
 
+	logger := getLogger()
 	myCache := cache.New(0, 0)
 	dockerName := "zookeeper"
 	hostname, _ := os.Hostname()
@@ -140,7 +138,7 @@ func TestDockerManager_e2e(t *testing.T) {
 	stratM := &StrategyManager{logger, myCache}
 
 	startDocker(dm, dockerName, t, hostname)
-	recoverDockerEmpty(stratM, dockerName, t, hostname)
+	recoverDockerEmpty(stratM, dockerName, t)
 	stopDocker(dm, dockerName, t, hostname)
 	recoverDocker(stratM, dockerName, t, hostname)
 	stopDocker(dm, dockerName, t, hostname)
@@ -158,7 +156,7 @@ func startDocker(dm *DockerManager, dockerName string, t *testing.T, hostname st
 	assert.Equal(t, expectedMessage, resp.Message)
 }
 
-func recoverDockerEmpty(sm *StrategyManager, dockerName string, t *testing.T, hostname string) {
+func recoverDockerEmpty(sm *StrategyManager, dockerName string, t *testing.T) {
 	resp, err := sm.Recover(context.TODO(), &proto.RecoverRequest{})
 	if err != nil {
 		t.Fatalf("Error in Docker recover Start request. err=%s", err)

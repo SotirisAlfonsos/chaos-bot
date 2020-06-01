@@ -94,7 +94,7 @@ type StrategyManager struct {
 
 //Recover all services that are in the cache (have been stopped). Clean cache for every successful recovery
 func (sm *StrategyManager) Recover(ctx context.Context, req *proto.RecoverRequest) (*proto.ResolveResponse, error) {
-	var responses []*proto.StatusResponse
+	responses := make([]*proto.StatusResponse, 0)
 
 	var err error = nil
 

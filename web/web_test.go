@@ -1,10 +1,10 @@
 package web
 
 import (
-	"chaos-slave/chaoslogger"
 	"chaos-slave/proto"
 	"context"
 	"fmt"
+	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
 	"testing"
 	"time"
 

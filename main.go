@@ -1,11 +1,11 @@
 package main
 
 import (
-	"chaos-slave/chaoslogger"
 	"chaos-slave/web"
 	"flag"
 	"fmt"
 
+	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/patrickmn/go-cache"
@@ -19,7 +19,7 @@ func main() {
 
 	port := flag.String(
 		"port",
-		"8080",
+		"8081",
 		"the port used by the grpc server.")
 
 	flag.Parse()
