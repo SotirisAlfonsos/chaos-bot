@@ -1,13 +1,13 @@
 package v1
 
 import (
-	"chaos-slave/common"
-	"chaos-slave/common/docker"
-	"chaos-slave/common/service"
-	"chaos-slave/proto"
 	"context"
 	"fmt"
 
+	"github.com/SotirisAlfonsos/chaos-slave/common"
+	"github.com/SotirisAlfonsos/chaos-slave/common/docker"
+	"github.com/SotirisAlfonsos/chaos-slave/common/service"
+	"github.com/SotirisAlfonsos/chaos-slave/proto"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/patrickmn/go-cache"

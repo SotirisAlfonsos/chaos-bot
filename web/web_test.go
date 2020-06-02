@@ -1,13 +1,13 @@
 package web
 
 import (
-	"chaos-slave/proto"
 	"context"
 	"fmt"
-	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
 	"testing"
 	"time"
 
+	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
+	"github.com/SotirisAlfonsos/chaos-slave/proto"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/patrickmn/go-cache"

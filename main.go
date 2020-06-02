@@ -1,11 +1,11 @@
 package main
 
 import (
-	"chaos-slave/web"
 	"flag"
 	"fmt"
 
 	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
+	"github.com/SotirisAlfonsos/chaos-slave/web"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/patrickmn/go-cache"

@@ -1,15 +1,15 @@
 package v1
 
 import (
-	"chaos-slave/common/docker"
-	"chaos-slave/common/service"
-	"chaos-slave/proto"
 	"context"
 	"fmt"
 	"os"
 	"testing"
 
 	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
+	"github.com/SotirisAlfonsos/chaos-slave/common/docker"
+	"github.com/SotirisAlfonsos/chaos-slave/common/service"
+	"github.com/SotirisAlfonsos/chaos-slave/proto"
 	"github.com/go-kit/kit/log"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"

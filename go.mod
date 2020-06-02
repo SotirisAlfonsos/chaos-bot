@@ -1,4 +1,4 @@
-module chaos-slave
+module github.com/SotirisAlfonsos/chaos-slave
 
 go 1.13
 
