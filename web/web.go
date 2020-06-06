@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/SotirisAlfonsos/chaos-slave/common/docker"
-	"github.com/SotirisAlfonsos/chaos-slave/common/service"
 	"github.com/SotirisAlfonsos/chaos-slave/proto"
 	api "github.com/SotirisAlfonsos/chaos-slave/web/api/v1"
 	"github.com/go-kit/kit/log"
@@ -49,16 +47,16 @@ func (h *GrpcHandler) Run() error {
 func (h *GrpcHandler) registerServices() {
 	proto.RegisterHealthServer(h.grpcServer, &api.HealthCheckService{})
 	proto.RegisterServiceServer(h.grpcServer, &api.ServiceManager{
-		Cache:   h.cache,
-		Service: &service.Service{Logger: h.Logger},
+		Cache:  h.cache,
+		Logger: h.Logger,
 	})
 	proto.RegisterDockerServer(h.grpcServer, &api.DockerManager{
 		Cache:  h.cache,
-		Docker: &docker.Docker{Logger: h.Logger},
+		Logger: h.Logger,
 	})
 	proto.RegisterStrategyServer(h.grpcServer, &api.StrategyManager{
-		Logger: h.Logger,
 		Cache:  h.cache,
+		Logger: h.Logger,
 	})
 }
 

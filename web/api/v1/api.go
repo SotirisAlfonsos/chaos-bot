@@ -32,13 +32,14 @@ func (hcs *HealthCheckService) Watch(req *proto.HealthCheckRequest, srv proto.He
 
 //ServiceManager is the rpc for services management
 type ServiceManager struct {
-	Cache   *cache.Cache
-	Service *service.Service
+	Cache  *cache.Cache
+	Logger log.Logger
 }
 
 //Start a service based on the name. Delete the item from the cache if it had been cached previously
 func (sm *ServiceManager) Start(ctx context.Context, req *proto.ServiceRequest) (*proto.StatusResponse, error) {
-	message, err := sm.Service.Start(req.Name)
+	serviceManage := &service.Service{JobName: req.JobName, Name: req.Name, Logger: sm.Logger}
+	message, err := serviceManage.Start()
 	if err == nil {
 		sm.Cache.Delete(req.Name)
 	}
@@ -48,10 +49,11 @@ func (sm *ServiceManager) Start(ctx context.Context, req *proto.ServiceRequest) 
 
 //Stop a service based on the name. Cache it if the service is stopped successfully
 func (sm *ServiceManager) Stop(ctx context.Context, req *proto.ServiceRequest) (*proto.StatusResponse, error) {
-	message, err := sm.Service.Stop(req.Name)
+	serviceManage := &service.Service{JobName: req.JobName, Name: req.Name, Logger: sm.Logger}
+	message, err := serviceManage.Stop()
 	if err == nil {
-		if cacheErr := sm.Cache.Add(req.Name, sm.Service, 0); cacheErr != nil {
-			_ = level.Error(sm.Service.Logger).Log("msg", "Could not update cache after stopping service", "err", cacheErr)
+		if cacheErr := sm.Cache.Add(req.Name, serviceManage, 0); cacheErr != nil {
+			_ = level.Error(sm.Logger).Log("msg", "Could not update cache after stopping service", "err", cacheErr)
 		}
 	}
 
@@ -61,12 +63,13 @@ func (sm *ServiceManager) Stop(ctx context.Context, req *proto.ServiceRequest) (
 //DockerManager is the rpc for docker management
 type DockerManager struct {
 	Cache  *cache.Cache
-	Docker *docker.Docker
+	Logger log.Logger
 }
 
 //Start a docker container based on the name. Delete the item from the cache if it had been cached previously
 func (sm *DockerManager) Start(ctx context.Context, req *proto.DockerRequest) (*proto.StatusResponse, error) {
-	message, err := sm.Docker.Start(req.Name)
+	dockerManage := &docker.Docker{JobName: req.JobName, Name: req.Name, Logger: sm.Logger}
+	message, err := dockerManage.Start()
 	if err == nil {
 		sm.Cache.Delete(req.Name)
 	}
@@ -76,10 +79,11 @@ func (sm *DockerManager) Start(ctx context.Context, req *proto.DockerRequest) (*
 
 //Stop a docker container based on the name. Cache it if the docker container is stopped successfully
 func (sm *DockerManager) Stop(ctx context.Context, req *proto.DockerRequest) (*proto.StatusResponse, error) {
-	message, err := sm.Docker.Stop(req.Name)
+	dockerManage := &docker.Docker{JobName: req.JobName, Name: req.Name, Logger: sm.Logger}
+	message, err := dockerManage.Stop()
 	if err == nil {
-		if cacheErr := sm.Cache.Add(req.Name, sm.Docker, 0); cacheErr != nil {
-			_ = level.Error(sm.Docker.Logger).Log("msg", "Could not update cache after stopping service", "err", cacheErr)
+		if cacheErr := sm.Cache.Add(req.Name, dockerManage, 0); cacheErr != nil {
+			_ = level.Error(sm.Logger).Log("msg", "Could not update cache after stopping service", "err", cacheErr)
 		}
 	}
 
@@ -88,8 +92,8 @@ func (sm *DockerManager) Stop(ctx context.Context, req *proto.DockerRequest) (*p
 
 //StrategyManager handles recovery of services
 type StrategyManager struct {
-	Logger log.Logger
 	Cache  *cache.Cache
+	Logger log.Logger
 }
 
 //Recover all services that are in the cache (have been stopped). Clean cache for every successful recovery
@@ -104,7 +108,7 @@ func (sm *StrategyManager) Recover(ctx context.Context, req *proto.RecoverReques
 			_ = level.Error(sm.Logger).Log("err", fmt.Sprintf("Could not find item %s in cache", item))
 		}
 
-		message, startErr := target.(common.Target).Start(item)
+		message, startErr := target.(common.Target).Start()
 		if startErr == nil {
 			sm.Cache.Delete(item)
 			_ = level.Info(sm.Logger).Log("err", fmt.Sprintf("Started and removed item %s from cache", item))

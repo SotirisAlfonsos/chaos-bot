@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
-	"github.com/SotirisAlfonsos/chaos-slave/common/docker"
 	"github.com/SotirisAlfonsos/chaos-slave/common/service"
 	"github.com/SotirisAlfonsos/chaos-slave/proto"
 	"github.com/go-kit/kit/log"
@@ -37,8 +36,8 @@ func TestServiceManager_e2e(t *testing.T) {
 	serviceName := "simple"
 	hostname, _ := os.Hostname()
 
-	sm := &ServiceManager{myCache, &service.Service{Logger: logger}}
-	stratM := &StrategyManager{logger, myCache}
+	sm := &ServiceManager{Cache: myCache, Logger: logger}
+	stratM := &StrategyManager{myCache, logger}
 
 	startService(sm, serviceName, t, hostname)
 	startServiceFail(sm, serviceName, t)
@@ -77,7 +76,7 @@ func startServiceFail(sm *ServiceManager, serviceName string, t *testing.T) {
 }
 
 func stopService(sm *ServiceManager, serviceName string, t *testing.T, hostname string) {
-	resp, err := sm.Stop(context.TODO(), &proto.ServiceRequest{Name: serviceName})
+	resp, err := sm.Stop(context.TODO(), &proto.ServiceRequest{JobName: serviceName, Name: serviceName})
 	if err != nil {
 		t.Fatalf("Error in Service Stop request. err=%s", err)
 	}
@@ -91,7 +90,7 @@ func stopService(sm *ServiceManager, serviceName string, t *testing.T, hostname 
 
 	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)
-	assert.Equal(t, sm.Service, serviceObj)
+	assert.Equal(t, serviceName, serviceObj.(*service.Service).Name)
 	assert.Equal(t, 1, sm.Cache.ItemCount())
 }
 
@@ -134,8 +133,8 @@ func TestDockerManager_e2e(t *testing.T) {
 	dockerName := "zookeeper"
 	hostname, _ := os.Hostname()
 
-	dm := &DockerManager{myCache, &docker.Docker{Logger: logger}}
-	stratM := &StrategyManager{logger, myCache}
+	dm := &DockerManager{Cache: myCache, Logger: logger}
+	stratM := &StrategyManager{myCache, logger}
 
 	startDocker(dm, dockerName, t, hostname)
 	recoverDockerEmpty(stratM, dockerName, t)

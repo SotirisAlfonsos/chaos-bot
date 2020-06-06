@@ -13,18 +13,20 @@ import (
 
 //Docker is the interface implementation that manages chaos on Docker
 type Docker struct {
-	Logger log.Logger
+	JobName string
+	Name    string
+	Logger  log.Logger
 }
 
 //Start will perform a docker start on the container specified
-func (s *Docker) Start(name string) (string, error) {
+func (s *Docker) Start() (string, error) {
 	dockerClient, err := client.NewEnvClient()
 	if err != nil {
 		_ = level.Error(s.Logger).Log("msg", "Could not instantiate docker client", "err", err)
 		return "Could not instantiate docker client", err
 	}
 
-	containerID, getIDErr := getContainerID(dockerClient, name)
+	containerID, getIDErr := getContainerID(dockerClient, s.Name)
 	if getIDErr != nil {
 		_ = level.Error(s.Logger).Log("msg", "Could not get list of containers", "err", getIDErr)
 	}
@@ -41,14 +43,14 @@ func (s *Docker) Start(name string) (string, error) {
 }
 
 //Stop will perform a docker stop on the container specified
-func (s *Docker) Stop(name string) (string, error) {
+func (s *Docker) Stop() (string, error) {
 	dockerClient, err := client.NewEnvClient()
 	if err != nil {
 		_ = level.Error(s.Logger).Log("msg", "Could not instantiate docker client", "err", err)
 		return "Could not instantiate docker client", err
 	}
 
-	containerID, getIDErr := getContainerID(dockerClient, name)
+	containerID, getIDErr := getContainerID(dockerClient, s.Name)
 	if getIDErr != nil {
 		_ = level.Error(s.Logger).Log("msg", "Could not get list of containers", "err", getIDErr)
 	}
@@ -61,7 +63,7 @@ func (s *Docker) Stop(name string) (string, error) {
 
 	_ = level.Info(s.Logger).Log("msg", fmt.Sprintf("Stopped container with id %s", containerID))
 
-	return constructMessage(s.Logger, "stopped", name), nil
+	return constructMessage(s.Logger, "stopped", s.Name), nil
 }
 
 func constructMessage(logger log.Logger, action string, name string) string {
