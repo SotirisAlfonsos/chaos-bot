@@ -27,7 +27,7 @@ func main() {
 	logger := createLogger(*debugLevel)
 	myCache := cache.New(0, 0)
 
-	grpcHandler := web.NewGrpcHandler(*port, logger, myCache)
+	grpcHandler := web.NewGRPCHandler(*port, logger, myCache)
 	if err := grpcHandler.Run(); err != nil {
 		_ = level.Error(logger).Log("msg", "Failed to start Grpc server on port "+*port, "err", err)
 	}
