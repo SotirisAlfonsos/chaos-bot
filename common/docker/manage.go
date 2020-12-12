@@ -20,7 +20,7 @@ type Docker struct {
 
 //Start will perform a docker start on the container specified
 func (s *Docker) Start() (string, error) {
-	dockerClient, err := client.NewEnvClient()
+	dockerClient, err := client.NewClientWithOpts()
 	if err != nil {
 		_ = level.Error(s.Logger).Log("msg", "Could not instantiate docker client", "err", err)
 		return "Could not instantiate docker client", err
@@ -44,7 +44,7 @@ func (s *Docker) Start() (string, error) {
 
 //Stop will perform a docker stop on the container specified
 func (s *Docker) Stop() (string, error) {
-	dockerClient, err := client.NewEnvClient()
+	dockerClient, err := client.NewClientWithOpts()
 	if err != nil {
 		_ = level.Error(s.Logger).Log("msg", "Could not instantiate docker client", "err", err)
 		return "Could not instantiate docker client", err

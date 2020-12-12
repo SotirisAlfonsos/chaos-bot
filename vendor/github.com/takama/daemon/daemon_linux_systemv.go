@@ -1,4 +1,4 @@
-// Copyright 2016 The Go Authors. All rights reserved.
+// Copyright 2020 The Go Authors. All rights reserved.
 // Use of this source code is governed by
 // license that can be found in the LICENSE file.
 
@@ -16,6 +16,7 @@ import (
 type systemVRecord struct {
 	name         string
 	description  string
+	kind         Kind
 	dependencies []string
 }
 
@@ -192,7 +193,7 @@ func (linux *systemVRecord) Status() (string, error) {
 	}
 
 	if !linux.isInstalled() {
-		return "Status could not defined", ErrNotInstalled
+		return statNotInstalled, ErrNotInstalled
 	}
 
 	statusAction, _ := linux.checkRunning()
@@ -205,6 +206,17 @@ func (linux *systemVRecord) Run(e Executable) (string, error) {
 	runAction := "Running " + linux.description + ":"
 	e.Run()
 	return runAction + " completed.", nil
+}
+
+// GetTemplate - gets service config template
+func (linux *systemVRecord) GetTemplate() string {
+	return systemVConfig
+}
+
+// SetTemplate - sets service config template
+func (linux *systemVRecord) SetTemplate(tplStr string) error {
+	systemVConfig = tplStr
+	return nil
 }
 
 var systemVConfig = `#! /bin/sh

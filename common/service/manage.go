@@ -18,7 +18,7 @@ type Service struct {
 
 //Start will perform a service start on the service specified
 func (s *Service) Start() (string, error) {
-	dmn, err := daemon.New(s.Name, "")
+	dmn, err := daemon.New(s.Name, "", daemon.SystemDaemon)
 	if err != nil {
 		_ = level.Error(s.Logger).Log("msg", "Could not instantiate daemon", "err", err)
 		return "Could not instantiate daemon", err
@@ -36,7 +36,7 @@ func (s *Service) Start() (string, error) {
 
 //Stop will perform a service stop on the service specified
 func (s *Service) Stop() (string, error) {
-	dmn, err := daemon.New(s.Name, "")
+	dmn, err := daemon.New(s.Name, "", daemon.SystemDaemon)
 	if err != nil {
 		return "Could not instantiate daemon", err
 	}

@@ -1,4 +1,4 @@
-// Copyright 2016 The Go Authors. All rights reserved.
+// Copyright 2020 The Go Authors. All rights reserved.
 // Use of this source code is governed by
 // license that can be found in the LICENSE file.
 
@@ -24,12 +24,13 @@ import (
 type windowsRecord struct {
 	name         string
 	description  string
+	kind         Kind
 	dependencies []string
 }
 
-func newDaemon(name, description string, dependencies []string) (Daemon, error) {
+func newDaemon(name, description string, kind Kind, dependencies []string) (Daemon, error) {
 
-	return &windowsRecord{name, description, dependencies}, nil
+	return &windowsRecord{name, description, kind, dependencies}, nil
 }
 
 // Install the service
@@ -51,7 +52,7 @@ func (windows *windowsRecord) Install(args ...string) (string, error) {
 	s, err := m.OpenService(windows.name)
 	if err == nil {
 		s.Close()
-		return installAction + failed, err
+		return installAction + failed, ErrAlreadyRunning
 	}
 
 	s, err = m.CreateService(windows.name, execp, mgr.Config{
@@ -64,6 +65,30 @@ func (windows *windowsRecord) Install(args ...string) (string, error) {
 		return installAction + failed, err
 	}
 	defer s.Close()
+
+	// set recovery action for service
+	// restart after 5 seconds for the first 3 times
+	// restart after 1 minute, otherwise
+	r := []mgr.RecoveryAction{
+		mgr.RecoveryAction{
+			Type:  mgr.ServiceRestart,
+			Delay: 5000 * time.Millisecond,
+		},
+		mgr.RecoveryAction{
+			Type:  mgr.ServiceRestart,
+			Delay: 5000 * time.Millisecond,
+		},
+		mgr.RecoveryAction{
+			Type:  mgr.ServiceRestart,
+			Delay: 5000 * time.Millisecond,
+		},
+		mgr.RecoveryAction{
+			Type:  mgr.ServiceRestart,
+			Delay: 60000 * time.Millisecond,
+		},
+	}
+	// set reset period as a day
+	s.SetRecoveryActions(r, uint32(86400))
 
 	return installAction + " completed.", nil
 }
@@ -317,4 +342,14 @@ func (windows *windowsRecord) Run(e Executable) (string, error) {
 	}
 
 	return runAction + " completed.", nil
+}
+
+// GetTemplate - gets service config template
+func (linux *windowsRecord) GetTemplate() string {
+	return ""
+}
+
+// SetTemplate - sets service config template
+func (linux *windowsRecord) SetTemplate(tplStr string) error {
+	return errors.New(fmt.Sprintf("templating is not supported for windows"))
 }
