@@ -122,7 +122,7 @@ func recoverServiceEmpty(sm *StrategyManager, serviceName string, t *testing.T) 
 	assert.Equal(t, 0, sm.Cache.ItemCount())
 }
 
-//=== End to end testing ===
+// === End to end testing ===
 func TestDockerManager_e2e(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping testing in short mode")

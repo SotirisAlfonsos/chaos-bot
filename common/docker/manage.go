@@ -11,14 +11,14 @@ import (
 	"github.com/go-kit/kit/log/level"
 )
 
-//Docker is the interface implementation that manages chaos on Docker
+// Docker is the interface implementation that manages chaos on Docker
 type Docker struct {
 	JobName string
 	Name    string
 	Logger  log.Logger
 }
 
-//Start will perform a docker start on the container specified
+// Start will perform a docker start on the container specified
 func (s *Docker) Start() (string, error) {
 	dockerClient, err := client.NewClientWithOpts()
 	if err != nil {
@@ -42,7 +42,7 @@ func (s *Docker) Start() (string, error) {
 	return constructMessage(s.Logger, "started", containerID), nil
 }
 
-//Stop will perform a docker stop on the container specified
+// Stop will perform a docker stop on the container specified
 func (s *Docker) Stop() (string, error) {
 	dockerClient, err := client.NewClientWithOpts()
 	if err != nil {

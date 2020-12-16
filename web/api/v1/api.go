@@ -16,28 +16,28 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-//HealthCheckService is the rpc
+// HealthCheckService is the rpc
 type HealthCheckService struct {
 }
 
-//Check the health of the slave
+// Check the health of the slave
 func (hcs *HealthCheckService) Check(ctx context.Context,
 	req *proto.HealthCheckRequest) (*proto.HealthCheckResponse, error) {
 	return &proto.HealthCheckResponse{Status: proto.HealthCheckResponse_SERVING}, nil
 }
 
-//Watch is not used at the moment
+// Watch is not used at the moment
 func (hcs *HealthCheckService) Watch(req *proto.HealthCheckRequest, srv proto.Health_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
 }
 
-//ServiceManager is the rpc for services management
+// ServiceManager is the rpc for services management
 type ServiceManager struct {
 	Cache  *cache.Cache
 	Logger log.Logger
 }
 
-//Start a service based on the name. Delete the item from the cache if it had been cached previously
+// Start a service based on the name. Delete the item from the cache if it had been cached previously
 func (sm *ServiceManager) Start(ctx context.Context, req *proto.ServiceRequest) (*proto.StatusResponse, error) {
 	serviceManage := &service.Service{JobName: req.JobName, Name: req.Name, Logger: sm.Logger}
 
@@ -46,7 +46,7 @@ func (sm *ServiceManager) Start(ctx context.Context, req *proto.ServiceRequest) 
 	return prepareResponse(message, err)
 }
 
-//Stop a service based on the name. Cache it if the service is stopped successfully
+// Stop a service based on the name. Cache it if the service is stopped successfully
 func (sm *ServiceManager) Stop(ctx context.Context, req *proto.ServiceRequest) (*proto.StatusResponse, error) {
 	serviceManage := &service.Service{JobName: req.JobName, Name: req.Name, Logger: sm.Logger}
 
@@ -55,13 +55,13 @@ func (sm *ServiceManager) Stop(ctx context.Context, req *proto.ServiceRequest) (
 	return prepareResponse(message, err)
 }
 
-//DockerManager is the rpc for docker management
+// DockerManager is the rpc for docker management
 type DockerManager struct {
 	Cache  *cache.Cache
 	Logger log.Logger
 }
 
-//Start a docker container based on the name. Delete the item from the cache if it had been cached previously
+// Start a docker container based on the name. Delete the item from the cache if it had been cached previously
 func (dm *DockerManager) Start(ctx context.Context, req *proto.DockerRequest) (*proto.StatusResponse, error) {
 	dockerManage := &docker.Docker{JobName: req.JobName, Name: req.Name, Logger: dm.Logger}
 
@@ -70,7 +70,7 @@ func (dm *DockerManager) Start(ctx context.Context, req *proto.DockerRequest) (*
 	return prepareResponse(message, err)
 }
 
-//Stop a docker container based on the name. Cache it if the docker container is stopped successfully
+// Stop a docker container based on the name. Cache it if the docker container is stopped successfully
 func (dm *DockerManager) Stop(ctx context.Context, req *proto.DockerRequest) (*proto.StatusResponse, error) {
 	dockerManage := &docker.Docker{JobName: req.JobName, Name: req.Name, Logger: dm.Logger}
 
@@ -100,13 +100,13 @@ func stopTarget(target common.Target, cache *cache.Cache, name string, logger lo
 	return message, err
 }
 
-//StrategyManager handles recovery of services
+// StrategyManager handles recovery of services
 type StrategyManager struct {
 	Cache  *cache.Cache
 	Logger log.Logger
 }
 
-//Recover all services that are in the cache (have been stopped). Clean cache for every successful recovery
+// Recover all services that are in the cache (have been stopped). Clean cache for every successful recovery
 func (sm *StrategyManager) Recover(ctx context.Context, req *proto.RecoverRequest) (*proto.ResolveResponse, error) {
 	responses := make([]*proto.StatusResponse, 0)
 

@@ -9,14 +9,14 @@ import (
 	"github.com/takama/daemon"
 )
 
-//Service is the interface implementation that manages chaos on services
+// Service is the interface implementation that manages chaos on services
 type Service struct {
 	JobName string
 	Name    string
 	Logger  log.Logger
 }
 
-//Start will perform a service start on the service specified
+// Start will perform a service start on the service specified
 func (s *Service) Start() (string, error) {
 	dmn, err := daemon.New(s.Name, "", daemon.SystemDaemon)
 	if err != nil {
@@ -34,7 +34,7 @@ func (s *Service) Start() (string, error) {
 	return constructMessage(s.Logger, "started", s.Name), nil
 }
 
-//Stop will perform a service stop on the service specified
+// Stop will perform a service stop on the service specified
 func (s *Service) Stop() (string, error) {
 	dmn, err := daemon.New(s.Name, "", daemon.SystemDaemon)
 	if err != nil {
