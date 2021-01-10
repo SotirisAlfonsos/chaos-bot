@@ -1,4 +1,4 @@
-module github.com/SotirisAlfonsos/chaos-slave
+module github.com/SotirisAlfonsos/chaos-bot
 
 go 1.13
 

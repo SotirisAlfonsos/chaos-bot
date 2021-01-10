@@ -6,9 +6,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/SotirisAlfonsos/chaos-bot/common/service"
+	"github.com/SotirisAlfonsos/chaos-bot/proto"
 	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
-	"github.com/SotirisAlfonsos/chaos-slave/common/service"
-	"github.com/SotirisAlfonsos/chaos-slave/proto"
 	"github.com/go-kit/kit/log"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
@@ -53,7 +53,7 @@ func startService(sm *ServiceManager, serviceName string, t *testing.T, hostname
 		t.Fatalf("Error in Service Start request. err=%s", err)
 	}
 
-	expectedMessage := fmt.Sprintf("Slave %s started service %s", hostname, serviceName)
+	expectedMessage := fmt.Sprintf("Bot %s started service %s", hostname, serviceName)
 	_, ok := sm.Cache.Get(serviceName)
 
 	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
@@ -81,7 +81,7 @@ func stopService(sm *ServiceManager, serviceName string, t *testing.T, hostname 
 		t.Fatalf("Error in Service Stop request. err=%s", err)
 	}
 
-	expectedMessage := fmt.Sprintf("Slave %s stopped service %s", hostname, serviceName)
+	expectedMessage := fmt.Sprintf("Bot %s stopped service %s", hostname, serviceName)
 	serviceObj, ok := sm.Cache.Get(serviceName)
 
 	if !ok {
@@ -100,7 +100,7 @@ func recoverService(sm *StrategyManager, serviceName string, t *testing.T, hostn
 		t.Fatalf("Error in Service Recover request. err=%s", err)
 	}
 
-	expectedMessage := fmt.Sprintf("Slave %s started service %s", hostname, serviceName)
+	expectedMessage := fmt.Sprintf("Bot %s started service %s", hostname, serviceName)
 	_, ok := sm.Cache.Get(serviceName)
 
 	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Response[0].Status)
@@ -149,7 +149,7 @@ func startDocker(dm *DockerManager, dockerName string, t *testing.T, hostname st
 		t.Fatalf("Error in Docker Start request. err=%s", err)
 	}
 
-	expectedMessage := fmt.Sprintf("Slave %s started docker container %s", hostname, dockerName)
+	expectedMessage := fmt.Sprintf("Bot %s started docker container %s", hostname, dockerName)
 
 	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)
@@ -174,7 +174,7 @@ func stopDocker(dm *DockerManager, dockerName string, t *testing.T, hostname str
 		t.Fatalf("Error in Docker Stop request. err=%s", err)
 	}
 
-	expectedMessage := fmt.Sprintf("Slave %s stopped docker container %s", hostname, dockerName)
+	expectedMessage := fmt.Sprintf("Bot %s stopped docker container %s", hostname, dockerName)
 
 	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)
@@ -186,7 +186,7 @@ func recoverDocker(sm *StrategyManager, dockerName string, t *testing.T, hostnam
 		t.Fatalf("Error in Docker recover Start request. err=%s", err)
 	}
 
-	expectedMessage := fmt.Sprintf("Slave %s started docker container %s", hostname, dockerName)
+	expectedMessage := fmt.Sprintf("Bot %s started docker container %s", hostname, dockerName)
 	_, ok := sm.Cache.Get(dockerName)
 
 	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Response[0].Status)

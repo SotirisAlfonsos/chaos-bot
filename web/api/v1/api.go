@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/SotirisAlfonsos/chaos-slave/common"
-	"github.com/SotirisAlfonsos/chaos-slave/common/docker"
-	"github.com/SotirisAlfonsos/chaos-slave/common/service"
-	"github.com/SotirisAlfonsos/chaos-slave/proto"
+	"github.com/SotirisAlfonsos/chaos-bot/common"
+	"github.com/SotirisAlfonsos/chaos-bot/common/docker"
+	"github.com/SotirisAlfonsos/chaos-bot/common/service"
+	"github.com/SotirisAlfonsos/chaos-bot/proto"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/patrickmn/go-cache"
@@ -20,7 +20,7 @@ import (
 type HealthCheckService struct {
 }
 
-// Check the health of the slave
+// Check the health of the chaos bot
 func (hcs *HealthCheckService) Check(ctx context.Context,
 	req *proto.HealthCheckRequest) (*proto.HealthCheckResponse, error) {
 	return &proto.HealthCheckResponse{Status: proto.HealthCheckResponse_SERVING}, nil

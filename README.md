@@ -1,5 +1,17 @@
-[![Build Status](https://travis-ci.org/SotirisAlfonsos/chaos-slave.svg)](https://travis-ci.org/SotirisAlfonsos/chaos-slave)
-[![Go Report Card](https://goreportcard.com/badge/github.com/SotirisAlfonsos/chaos-slave)](https://goreportcard.com/report/github.com/SotirisAlfonsos/chaos-slave)
-[![codebeat badge](https://codebeat.co/badges/879b0c22-fc52-42dd-80c4-5a4c577c45db)](https://codebeat.co/projects/github-com-sotirisalfonsos-chaos-slave-master)
-[![codecov.io](https://codecov.io/github/SotirisAlfonsos/chaos-slave/coverage.svg?branch=master)](https://codecov.io/github/SotirisAlfonsos/chaos-slave?branch=master)
-# chaos-slave
+[![Build Status](https://travis-ci.org/SotirisAlfonsos/chaos-bot.svg)](https://travis-ci.org/SotirisAlfonsos/chaos-bot)
+[![Go Report Card](https://goreportcard.com/badge/github.com/SotirisAlfonsos/chaos-bot)](https://goreportcard.com/report/github.com/SotirisAlfonsos/chaos-bot)
+[![codebeat badge](https://codebeat.co/badges/9b7765b0-e40f-4534-8203-dde06d78dc07)](https://codebeat.co/projects/github-com-sotirisalfonsos-chaos-bot-master)
+[![codecov](https://codecov.io/gh/SotirisAlfonsos/chaos-bot/branch/master/graph/badge.svg?token=ICGOMLDXRY)](https://codecov.io/gh/SotirisAlfonsos/chaos-bot)
+
+# chaos-bot
+
+Bots are responsible for the fault injections and should be run as services on the target servers with privileged system permissions (root).  
+The [chaos master](https://github.com/SotirisAlfonsos/chaos-master) is responsible for controlling the bots. The master provides an api through which all fault injections can be orchestrated.
+
+#### Fault injection types   
+- &check; Docker outage: The selected Container is killed 
+- &check; Services outage: The selected Service is killed
+- <i>(Coming soon)</i>
+  - Cpu spikes
+  - Network & package failures
+  - Kubernetes failures 

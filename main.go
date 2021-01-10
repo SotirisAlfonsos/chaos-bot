@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
-	"github.com/SotirisAlfonsos/chaos-slave/web"
+	"github.com/SotirisAlfonsos/chaos-bot/web"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/patrickmn/go-cache"
@@ -15,7 +15,7 @@ func main() {
 	debugLevel := flag.String(
 		"debug.level",
 		"info",
-		"the debug level for the chaos slave. Can be one of debug, info, warn, error.")
+		"the debug level for the chaos bot. Can be one of debug, info, warn, error.")
 
 	port := flag.String(
 		"port",

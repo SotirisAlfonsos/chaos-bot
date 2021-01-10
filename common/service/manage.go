@@ -58,5 +58,5 @@ func constructMessage(logger log.Logger, action string, name string) string {
 		hostname = "Unknown"
 	}
 
-	return fmt.Sprintf("Slave %s %s service %s", hostname, action, name)
+	return fmt.Sprintf("Bot %s %s service %s", hostname, action, name)
 }

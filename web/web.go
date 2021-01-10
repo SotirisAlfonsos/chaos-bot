@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/SotirisAlfonsos/chaos-slave/proto"
-	api "github.com/SotirisAlfonsos/chaos-slave/web/api/v1"
+	"github.com/SotirisAlfonsos/chaos-bot/proto"
+	api "github.com/SotirisAlfonsos/chaos-bot/web/api/v1"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/patrickmn/go-cache"
@@ -26,7 +26,7 @@ func NewGRPCHandler(port string, logger log.Logger, cache *cache.Cache) *GRPCHan
 	return &GRPCHandler{port, logger, GRPCServer, cache}
 }
 
-// Run starts the slave GRPC server
+// Run starts the bot GRPC server
 func (h *GRPCHandler) Run() error {
 	_ = level.Info(h.Logger).Log("msg", "starting web server on port "+h.Port)
 
@@ -60,7 +60,7 @@ func (h *GRPCHandler) registerServices() {
 	})
 }
 
-// Stop stops the slave GRPC server
+// Stop stops the bot GRPC server
 func (h *GRPCHandler) Stop() {
 	h.GRPCServer.GracefulStop()
 }

@@ -73,7 +73,7 @@ func constructMessage(logger log.Logger, action string, name string) string {
 		hostname = "Unknown"
 	}
 
-	return fmt.Sprintf("Slave %s %s docker container %s", hostname, action, name)
+	return fmt.Sprintf("Bot %s %s docker container %s", hostname, action, name)
 }
 
 func getContainerID(cli *client.Client, name string) (string, error) {
