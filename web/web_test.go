@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SotirisAlfonsos/chaos-bot/config"
+
 	"github.com/SotirisAlfonsos/chaos-bot/proto"
 	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
 	"github.com/go-kit/kit/log"
@@ -25,7 +27,7 @@ func TestHealthCheckGRPCCheckSuccess(t *testing.T) {
 	done := make(chan struct{})
 	errOnGRPCHandlerRun := make(chan error)
 
-	withTestGRPCServer(port, done, errOnGRPCHandlerRun)
+	withTestGRPCServer(t, port, done, errOnGRPCHandlerRun)
 
 	clientConn, err := withTestGRPCClientConn(port)
 	if err != nil {
@@ -54,7 +56,7 @@ func TestHealthCheckGRPCCheckInvalidPort(t *testing.T) {
 	done := make(chan struct{})
 	errOnGRPCHandlerRun := make(chan error)
 
-	withTestGRPCServer(port, done, errOnGRPCHandlerRun)
+	withTestGRPCServer(t, port, done, errOnGRPCHandlerRun)
 
 	clientConn, err := withTestGRPCClientConn(port)
 	if err != nil {
@@ -86,7 +88,7 @@ func TestStartServiceGRPCSuccess(t *testing.T) {
 	done := make(chan struct{})
 	errOnGRPCHandlerRun := make(chan error)
 
-	withTestGRPCServer(port, done, errOnGRPCHandlerRun)
+	withTestGRPCServer(t, port, done, errOnGRPCHandlerRun)
 
 	clientConn, err := withTestGRPCClientConn(port)
 	if err != nil {
@@ -120,7 +122,7 @@ func TestStopServiceGRPCSuccess(t *testing.T) {
 	done := make(chan struct{})
 	errOnGRPCHandlerRun := make(chan error)
 
-	withTestGRPCServer(port, done, errOnGRPCHandlerRun)
+	withTestGRPCServer(t, port, done, errOnGRPCHandlerRun)
 
 	clientConn, err := withTestGRPCClientConn(port)
 	if err != nil {
@@ -143,9 +145,12 @@ func TestStopServiceGRPCSuccess(t *testing.T) {
 	assert.NotNil(t, resp.Message)
 }
 
-func withTestGRPCServer(port string, done chan struct{}, errOnGRPCHandlerRun chan error) {
+func withTestGRPCServer(t *testing.T, port string, done chan struct{}, errOnGRPCHandlerRun chan error) {
 	myCache := cache.New(0, 0)
-	GRPCHandler := NewGRPCHandler(port, logger, myCache)
+	GRPCHandler, err := NewGRPCHandler(port, logger, myCache, &config.Config{})
+	if err != nil {
+		t.Fatalf("Could not create grpc handler")
+	}
 
 	go func(errOnGRPCHandlerRun chan error) {
 		if err := GRPCHandler.Run(); err != nil {

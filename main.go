@@ -3,9 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
-	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
+	"github.com/SotirisAlfonsos/chaos-bot/config"
+
 	"github.com/SotirisAlfonsos/chaos-bot/web"
+	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/patrickmn/go-cache"
@@ -22,12 +25,28 @@ func main() {
 		"8081",
 		"the port used by the grpc server.")
 
+	configFile := flag.String(
+		"config.file",
+		"",
+		"the file that contains the configuration for the chaos master")
+
 	flag.Parse()
 
 	logger := createLogger(*debugLevel)
 	myCache := cache.New(0, 0)
 
-	grpcHandler := web.NewGRPCHandler(*port, logger, myCache)
+	conf, err := config.GetConfig(*configFile)
+	if err != nil {
+		_ = level.Error(logger).Log("err", err)
+		os.Exit(1)
+	}
+
+	grpcHandler, err := web.NewGRPCHandler(*port, logger, myCache, conf)
+	if err != nil {
+		_ = level.Error(logger).Log("err", err)
+		os.Exit(1)
+	}
+
 	if err := grpcHandler.Run(); err != nil {
 		_ = level.Error(logger).Log("msg", "Failed to start Grpc server on port "+*port, "err", err)
 	}

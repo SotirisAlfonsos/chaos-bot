@@ -1,0 +1,3 @@
+key_file: "config/test/certs/server-key.pem"
+cert_file: "config/test/certs/server-cert.pem"
+peer_token: 30028dd6-a641-4ac3-91d8-1e214ac5e6f6
