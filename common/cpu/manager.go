@@ -29,7 +29,6 @@ const (
 // the injection and the channel that will be used to stop it
 func New(logger log.Logger) *CPU {
 	return &CPU{
-		stop:   make(chan int),
 		logger: logger,
 	}
 }
@@ -38,6 +37,8 @@ func New(logger log.Logger) *CPU {
 func (cpu *CPU) Start(threads int) (string, error) {
 	cpu.mu.Lock()
 	defer cpu.mu.Unlock()
+
+	cpu.stop = make(chan int)
 
 	if cpu.status == started {
 		return "Could not inject cpu failure", errors.New("CPU injection already running. Stop it before starting another")
@@ -53,8 +54,17 @@ func (cpu *CPU) Start(threads int) (string, error) {
 
 // Start will recover cpu failure by closing all channels
 func (cpu *CPU) Stop() (string, error) {
+	cpu.mu.Lock()
+	defer cpu.mu.Unlock()
+
+	if cpu.status != started {
+		return "Could not stop cpu failure", errors.New("CPU injection is not running. Start it before trying to stop")
+	}
+
 	close(cpu.stop)
+	cpu.stop = make(chan int)
 	cpu.status = stopped
+
 	return constructMessage(cpu.logger, "stopped"), nil
 }
 
@@ -75,6 +85,9 @@ func (cpu *CPU) injection(threads int) error {
 			}
 		}()
 	}
+
+	_ = level.Info(cpu.logger).Log("msg", fmt.Sprintf("Starting cpu injection by spawning %d goroutines", threads))
+
 	return nil
 }
 
