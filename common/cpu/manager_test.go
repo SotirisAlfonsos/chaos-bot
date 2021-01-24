@@ -2,7 +2,7 @@ package cpu
 
 import (
 	"fmt"
-	"regexp"
+	"os"
 	"runtime"
 	"testing"
 	"time"
@@ -28,8 +28,8 @@ func TestCPU_Start_and_Stop(t *testing.T) {
 			message: "Start and stop cpu experiment for single thread",
 			threads: 1,
 			expected: map[string]string{
-				"start": "Bot (\\w+) started cpu injection",
-				"stop":  "Bot (\\w+) stopped cpu injection",
+				"start": fmt.Sprintf("Bot %s started cpu injection", getHostname(t)),
+				"stop":  fmt.Sprintf("Bot %s stopped cpu injection", getHostname(t)),
 			},
 		},
 	}
@@ -44,13 +44,13 @@ func TestCPU_Start_and_Stop(t *testing.T) {
 
 		goroutinesDuringInjection := runtime.NumGoroutine()
 		assert.Equal(t, goroutinesBeforeExperiment+dataItem.threads, goroutinesDuringInjection)
-		assert.Regexp(t, regexp.MustCompile(dataItem.expected["start"]), startResponse)
+		assert.Equal(t, dataItem.expected["start"], startResponse)
 
 		stopResponse := stopExperiment(t, cpu)
 
 		goroutinesAfterInjection := runtime.NumGoroutine()
 		assert.Equal(t, goroutinesAfterInjection, goroutinesDuringInjection-dataItem.threads)
-		assert.Regexp(t, regexp.MustCompile(dataItem.expected["stop"]), stopResponse)
+		assert.Equal(t, dataItem.expected["stop"], stopResponse)
 	}
 }
 
@@ -113,6 +113,14 @@ func TestCPU_Start_and_Stop_with_invalid_thread_count(t *testing.T) {
 		assert.NotNil(t, err)
 		assert.Equal(t, dataItem.expected["error"], err.Error())
 	}
+}
+
+func getHostname(t *testing.T) string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		t.Fatalf("Can not get hostname")
+	}
+	return hostname
 }
 
 func getLogger() log.Logger {
