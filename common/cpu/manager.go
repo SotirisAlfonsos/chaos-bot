@@ -1,9 +1,10 @@
 package cpu
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"runtime"
+	"sync"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -11,39 +12,58 @@ import (
 
 // CPU is the interface implementation that manages cpu failure injections
 type CPU struct {
-	threads int
-	stop    chan int
-	logger  log.Logger
+	mu     sync.Mutex
+	status status
+	stop   chan int
+	logger log.Logger
 }
 
-func New(percentage int, logger log.Logger) (*CPU, error) {
-	if percentage > 100 || percentage < 0 {
-		return nil, fmt.Errorf("cpu injection percentage %d is out of bounds. should be 0 to 100", percentage)
-	}
+type status int
 
+const (
+	stopped status = iota
+	started
+)
+
+// New will create a new CPU instance with the amount of threads to perform
+// the injection and the channel that will be used to stop it
+func New(logger log.Logger) *CPU {
 	return &CPU{
-		threads: runtime.NumCPU() * percentage / 100,
-		stop:    make(chan int),
-		logger:  logger,
-	}, nil
+		stop:   make(chan int),
+		logger: logger,
+	}
 }
 
 // Start will perform a cpu failure injection by starting goroutines in for loops
-func (cpu *CPU) Start() (string, error) {
-	if err := cpu.injection(); err != nil {
+func (cpu *CPU) Start(threads int) (string, error) {
+	cpu.mu.Lock()
+	defer cpu.mu.Unlock()
+
+	if cpu.status == started {
+		return "Could not inject cpu failure", errors.New("CPU injection already running. Stop it before starting another")
+	}
+
+	if err := cpu.injection(threads); err != nil {
 		return "Could not inject cpu failure", err
 	}
+
+	cpu.status = started
 	return constructMessage(cpu.logger, "started"), nil
 }
 
 // Start will recover cpu failure by closing all channels
 func (cpu *CPU) Stop() (string, error) {
 	close(cpu.stop)
+	cpu.status = stopped
 	return constructMessage(cpu.logger, "stopped"), nil
 }
 
-func (cpu *CPU) injection() error {
-	for i := 0; i < cpu.threads; i++ {
+func (cpu *CPU) injection(threads int) error {
+	if threads <= 0 {
+		return errors.New("base on the percentage specified and your number of CPUs we can only block 0 cpu cores. ( CPU num * percentage / 100 )")
+	}
+
+	for i := 0; i < threads; i++ {
 		go func() {
 			for {
 				select {

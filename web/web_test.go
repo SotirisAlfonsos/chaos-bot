@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/SotirisAlfonsos/chaos-bot/config"
-
-	"github.com/SotirisAlfonsos/chaos-bot/proto"
+	v1 "github.com/SotirisAlfonsos/chaos-bot/proto/grpc/v1"
 	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -34,7 +33,7 @@ func TestHealthCheckGRPCCheckSuccess(t *testing.T) {
 		t.Fatalf("Can not create client connection")
 	}
 
-	client := proto.NewHealthClient(clientConn)
+	client := v1.NewHealthClient(clientConn)
 	resp := performHChReqOnCheck(client)
 
 	done <- struct{}{}
@@ -47,7 +46,7 @@ func TestHealthCheckGRPCCheckSuccess(t *testing.T) {
 	assert.NotNil(t, resp)
 	assert.Nil(t, err)
 	assert.Nil(t, <-errOnGRPCHandlerRun)
-	assert.Equal(t, proto.HealthCheckResponse_SERVING, resp.Status)
+	assert.Equal(t, v1.HealthCheckResponse_SERVING, resp.Status)
 }
 
 func TestHealthCheckGRPCCheckInvalidPort(t *testing.T) {
@@ -63,7 +62,7 @@ func TestHealthCheckGRPCCheckInvalidPort(t *testing.T) {
 		t.Fatalf("Can not create client connection")
 	}
 
-	client := proto.NewHealthClient(clientConn)
+	client := v1.NewHealthClient(clientConn)
 	resp := performHChReqOnCheck(client)
 
 	done <- struct{}{}
@@ -95,7 +94,7 @@ func TestStartServiceGRPCSuccess(t *testing.T) {
 		t.Fatalf("Can not create client connection")
 	}
 
-	client := proto.NewServiceClient(clientConn)
+	client := v1.NewServiceClient(clientConn)
 	resp := performStartServiceReq(client)
 
 	done <- struct{}{}
@@ -107,7 +106,7 @@ func TestStartServiceGRPCSuccess(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Nil(t, <-errOnGRPCHandlerRun)
-	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
+	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Status)
 	assert.NotNil(t, resp.Message)
 }
 
@@ -129,7 +128,7 @@ func TestStopServiceGRPCSuccess(t *testing.T) {
 		t.Fatalf("Can not create client connection")
 	}
 
-	client := proto.NewServiceClient(clientConn)
+	client := v1.NewServiceClient(clientConn)
 	resp := performStopServiceReq(client)
 
 	done <- struct{}{}
@@ -141,7 +140,7 @@ func TestStopServiceGRPCSuccess(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Nil(t, <-errOnGRPCHandlerRun)
-	assert.Equal(t, proto.StatusResponse_SUCCESS, resp.Status)
+	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Status)
 	assert.NotNil(t, resp.Message)
 }
 
@@ -177,8 +176,8 @@ func withTestGRPCClientConn(port string) (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
-func performHChReqOnCheck(client proto.HealthClient) *proto.HealthCheckResponse {
-	resp, err := client.Check(context.Background(), &proto.HealthCheckRequest{})
+func performHChReqOnCheck(client v1.HealthClient) *v1.HealthCheckResponse {
+	resp, err := client.Check(context.Background(), &v1.HealthCheckRequest{})
 	if err != nil {
 		_ = level.Error(logger).Log("msg", "Failed to call the Check method on the Health-check", "err", err)
 
@@ -188,8 +187,8 @@ func performHChReqOnCheck(client proto.HealthClient) *proto.HealthCheckResponse 
 	return resp
 }
 
-func performStartServiceReq(client proto.ServiceClient) *proto.StatusResponse {
-	resp, err := client.Start(context.Background(), &proto.ServiceRequest{Name: "simple"})
+func performStartServiceReq(client v1.ServiceClient) *v1.StatusResponse {
+	resp, err := client.Start(context.Background(), &v1.ServiceRequest{Name: "simple"})
 	if err != nil {
 		_ = level.Error(logger).Log("msg", "Failed to call the Start method on the Service", "err", err)
 		return resp
@@ -198,8 +197,8 @@ func performStartServiceReq(client proto.ServiceClient) *proto.StatusResponse {
 	return resp
 }
 
-func performStopServiceReq(client proto.ServiceClient) *proto.StatusResponse {
-	resp, err := client.Stop(context.Background(), &proto.ServiceRequest{Name: "simple"})
+func performStopServiceReq(client v1.ServiceClient) *v1.StatusResponse {
+	resp, err := client.Stop(context.Background(), &v1.ServiceRequest{Name: "simple"})
 	if err != nil {
 		_ = level.Error(logger).Log("msg", "Failed to call the Start method on the Service", "err", err)
 		return resp

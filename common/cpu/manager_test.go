@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"fmt"
+	"regexp"
 	"runtime"
 	"testing"
 	"time"
@@ -16,73 +17,47 @@ var (
 )
 
 type dataItems struct {
-	message    string
-	percentage int
-	expected   map[string]string
+	message  string
+	threads  int
+	expected map[string]string
 }
 
 func TestCPU_Start_and_Stop(t *testing.T) {
 	dataItems := []dataItems{
 		{
-			message:    "Start and stop cpu experiment for cpu 50 percent",
-			percentage: 50,
+			message: "Start and stop cpu experiment for single thread",
+			threads: 1,
 			expected: map[string]string{
-				"start": "Bot ubuntu started cpu injection",
-				"stop":  "Bot ubuntu stopped cpu injection",
-			},
-		},
-		{
-			message:    "Start and stop cpu experiment for cpu 100 percent",
-			percentage: 100,
-			expected: map[string]string{
-				"start": "Bot ubuntu started cpu injection",
-				"stop":  "Bot ubuntu stopped cpu injection",
-			},
-		},
-		{
-			message:    "Start and stop cpu experiment for cpu 1 percent",
-			percentage: 1,
-			expected: map[string]string{
-				"start": "Bot ubuntu started cpu injection",
-				"stop":  "Bot ubuntu stopped cpu injection",
-			},
-		},
-		{
-			message:    "Start and stop cpu experiment for cpu 0 percent",
-			percentage: 0,
-			expected: map[string]string{
-				"start": "Bot ubuntu started cpu injection",
-				"stop":  "Bot ubuntu stopped cpu injection",
+				"start": "Bot (\\w+) started cpu injection",
+				"stop":  "Bot (\\w+) stopped cpu injection",
 			},
 		},
 	}
 
 	for _, dataItem := range dataItems {
 		t.Logf(dataItem.message)
-		cpu, err := New(dataItem.percentage, logger)
-		if err != nil {
-			t.Fatalf(err.Error())
-		}
+		cpu := New(logger)
+
 		goroutinesBeforeExperiment := runtime.NumGoroutine()
 
-		startResponse := startExperiment(t, cpu)
+		startResponse := startExperiment(t, dataItem.threads, cpu)
 
 		goroutinesDuringInjection := runtime.NumGoroutine()
-		assert.Equal(t, goroutinesBeforeExperiment+cpu.threads, goroutinesDuringInjection)
-		assert.Equal(t, dataItem.expected["start"], startResponse)
+		assert.Equal(t, goroutinesBeforeExperiment+dataItem.threads, goroutinesDuringInjection)
+		assert.Regexp(t, regexp.MustCompile(dataItem.expected["start"]), startResponse)
 
 		stopResponse := stopExperiment(t, cpu)
 
 		goroutinesAfterInjection := runtime.NumGoroutine()
-		assert.Equal(t, goroutinesAfterInjection, goroutinesDuringInjection-cpu.threads)
-		assert.Equal(t, dataItem.expected["stop"], stopResponse)
+		assert.Equal(t, goroutinesAfterInjection, goroutinesDuringInjection-dataItem.threads)
+		assert.Regexp(t, regexp.MustCompile(dataItem.expected["stop"]), stopResponse)
 	}
 }
 
-func startExperiment(t *testing.T, cpu *CPU) string {
-	startResponse, startErr := cpu.Start()
+func startExperiment(t *testing.T, percentage int, cpu *CPU) string {
+	startResponse, startErr := cpu.Start(percentage)
 	if startErr != nil {
-		t.Fatalf("Failed to start cpu injection")
+		t.Fatalf("Failed to start cpu injection. err=%s", startErr.Error())
 	}
 	time.Sleep(3 * time.Second)
 	return startResponse
@@ -97,32 +72,46 @@ func stopExperiment(t *testing.T, cpu *CPU) string {
 	return stopResponse
 }
 
-func TestCPU_Start_and_Stop_with_invalid_percentage(t *testing.T) {
+func TestCPU_Start_with_status_already_started(t *testing.T) {
+	cpu := New(logger)
+	cpu.status = started
+
+	message, err := cpu.Start(50)
+
+	assert.Equal(t, "Could not inject cpu failure", message)
+	assert.NotNil(t, err)
+	assert.Equal(t, "CPU injection already running. Stop it before starting another", err.Error())
+	assert.Equal(t, started, cpu.status)
+}
+
+func TestCPU_Start_and_Stop_with_invalid_thread_count(t *testing.T) {
 	dataItems := []dataItems{
 		{
-			message:    "Should not start experiment for cpu more than 100",
-			percentage: 101,
+			message: "Should not start experiment for percentage leading to 0 threads",
+			threads: 0,
 			expected: map[string]string{
-				"new cpu": "cpu injection percentage 101 is out of bounds. should be 0 to 100",
+				"message": "Could not inject cpu failure",
+				"error":   "base on the percentage specified and your number of CPUs we can only block 0 cpu cores. ( CPU num * percentage / 100 )",
 			},
 		},
 		{
-			message:    "Should not start experiment for cpu less than 0",
-			percentage: -1,
+			message: "Should not start experiment for percentage leading to -1 threads",
+			threads: -1,
 			expected: map[string]string{
-				"new cpu": "cpu injection percentage -1 is out of bounds. should be 0 to 100",
+				"message": "Could not inject cpu failure",
+				"error":   "base on the percentage specified and your number of CPUs we can only block 0 cpu cores. ( CPU num * percentage / 100 )",
 			},
 		},
 	}
-
 	for _, dataItem := range dataItems {
 		t.Logf(dataItem.message)
-		_, err := New(dataItem.percentage, logger)
-		if err == nil {
-			t.Fatalf("Should have error for invalid percentage %d", dataItem.percentage)
-		}
+		cpu := New(logger)
 
-		assert.Equal(t, dataItem.expected["new cpu"], err.Error())
+		message, err := cpu.Start(dataItem.threads)
+
+		assert.Equal(t, dataItem.expected["message"], message)
+		assert.NotNil(t, err)
+		assert.Equal(t, dataItem.expected["error"], err.Error())
 	}
 }
 

@@ -12,7 +12,6 @@ require (
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/moby/term v0.0.0-20201110203204-bea5bbe245bf // indirect
 	github.com/morikuni/aec v1.0.0 // indirect

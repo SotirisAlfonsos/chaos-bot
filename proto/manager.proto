@@ -1,19 +1,26 @@
 syntax = "proto3";
 
-package proto;
+option go_package = "grpc/v1";
+
+package v1;
 
 service Service {
-    rpc Start(ServiceRequest) returns (StatusResponse);
-    rpc Stop(ServiceRequest) returns (StatusResponse);
+    rpc Start(ServiceRequest) returns (StatusResponse) {};
+    rpc Stop(ServiceRequest) returns (StatusResponse) {};
 }
 
 service Docker {
-    rpc Start(DockerRequest) returns (StatusResponse);
-    rpc Stop(DockerRequest) returns (StatusResponse);
+    rpc Start(DockerRequest) returns (StatusResponse) {};
+    rpc Stop(DockerRequest) returns (StatusResponse) {};
+}
+
+service CPU {
+    rpc Start(CPURequest) returns (StatusResponse) {};
+    rpc Stop(CPURequest) returns (StatusResponse) {};
 }
 
 service Strategy {
-    rpc Recover(RecoverRequest) returns (ResolveResponse);
+    rpc Recover(RecoverRequest) returns (ResolveResponse) {};
 }
 
 message ServiceRequest {
@@ -24,6 +31,10 @@ message ServiceRequest {
 message DockerRequest {
     string jobName = 1;
     string name = 2;
+}
+
+message CPURequest {
+    int32 percentage = 1;
 }
 
 message RecoverRequest {

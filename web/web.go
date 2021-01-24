@@ -7,8 +7,9 @@ import (
 	"net"
 	"strings"
 
+	"github.com/SotirisAlfonsos/chaos-bot/common/cpu"
 	"github.com/SotirisAlfonsos/chaos-bot/config"
-	"github.com/SotirisAlfonsos/chaos-bot/proto"
+	v1 "github.com/SotirisAlfonsos/chaos-bot/proto/grpc/v1"
 	api "github.com/SotirisAlfonsos/chaos-bot/web/api/v1"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -119,16 +120,20 @@ func (h *GRPCHandler) Run() error {
 }
 
 func (h *GRPCHandler) registerServices() {
-	proto.RegisterHealthServer(h.GRPCServer, &api.HealthCheckService{})
-	proto.RegisterServiceServer(h.GRPCServer, &api.ServiceManager{
+	v1.RegisterHealthServer(h.GRPCServer, &api.HealthCheckService{})
+	v1.RegisterServiceServer(h.GRPCServer, &api.ServiceManager{
 		Cache:  h.cache,
 		Logger: h.Logger,
 	})
-	proto.RegisterDockerServer(h.GRPCServer, &api.DockerManager{
+	v1.RegisterDockerServer(h.GRPCServer, &api.DockerManager{
 		Cache:  h.cache,
 		Logger: h.Logger,
 	})
-	proto.RegisterStrategyServer(h.GRPCServer, &api.StrategyManager{
+	v1.RegisterCPUServer(h.GRPCServer, &api.CPUManager{
+		CPU:    cpu.New(h.Logger),
+		Logger: h.Logger,
+	})
+	v1.RegisterStrategyServer(h.GRPCServer, &api.StrategyManager{
 		Cache:  h.cache,
 		Logger: h.Logger,
 	})

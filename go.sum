@@ -14,7 +14,9 @@ github.com/SotirisAlfonsos/chaos-master v0.0.0-20200601181005-5bd31b7d913e h1:yM
 github.com/SotirisAlfonsos/chaos-master v0.0.0-20200601181005-5bd31b7d913e/go.mod h1:XYFlu0gB3sLbHcW1RrXZBvtpKtl21Lqx6kZtUlJ/jyI=
 github.com/SotirisAlfonsos/chaos-master v0.0.0-20200829191619-be86feb4a4c9 h1:dVATnoAM38c7Im8/kGQjrMe/mvWeQS6UiBW3LISgUZY=
 github.com/SotirisAlfonsos/chaos-master v0.0.0-20200829191619-be86feb4a4c9/go.mod h1:VJBhhqUcpuMKRtSApdeoIfxb+6rN7i1Ynp1kM+zIKdo=
+github.com/SotirisAlfonsos/chaos-slave v0.0.0-20200606230330-b9ec8b66c4a0 h1:jMTGhJ12ym2HjRI4avm1g4x9BdCX7tiM7S8JKdhgHU4=
 github.com/SotirisAlfonsos/chaos-slave v0.0.0-20200606230330-b9ec8b66c4a0/go.mod h1:B6pRN4d/gH49hAJoNJETg7ipww+qtoaIdTm1UsV1wAs=
+github.com/SotirisAlfonsos/chaos-slave v0.0.0-20210121234342-00c6f3c9b5f7 h1:ueUppcBC3qQQx4cD2c7SJ2x45Mk4JWWfXcUUQq6V9WE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5/go.mod h1:SkGFH1ia65gfNATL8TAiHDNxPzPdmEL5uirI2Uyuz6c=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
