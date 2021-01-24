@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -62,7 +63,6 @@ func (cpu *CPU) Stop() (string, error) {
 	}
 
 	close(cpu.stop)
-	cpu.stop = make(chan int)
 	cpu.status = stopped
 
 	return constructMessage(cpu.logger, "stopped"), nil
@@ -75,11 +75,17 @@ func (cpu *CPU) injection(threads int) error {
 
 	for i := 0; i < threads; i++ {
 		go func() {
+			tempMin := 0
 			for {
+				_, minutes, _ := time.Now().Clock()
 				select {
 				case <-cpu.stop:
 					return
 				default: //nolint:staticcheck
+					if tempMin != minutes {
+						_ = level.Info(cpu.logger).Log("msg", "inject cpu failure")
+						tempMin = minutes
+					}
 					// left empty on purpose for cpu failure injection
 				}
 			}
