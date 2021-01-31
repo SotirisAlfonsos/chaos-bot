@@ -11,8 +11,7 @@ The [chaos master](https://github.com/SotirisAlfonsos/chaos-master) is responsib
 #### Fault injection types   
 - &check; Docker outage: The selected Container is killed 
 - &check; Services outage: The selected Service is killed
-- &check; Cpu spikes: Create CPU spike based on percentage. The number of logical CPUs that will be blocked is:
-    > <i>Num logical CPUs</i> * <i>percentage</i> / <i>100</i>    
+- &check; Cpu spikes: Create CPU spike based on percentage.
 - <i>(Coming soon)</i>
   - Network & package failures
   - Memory spike injection
