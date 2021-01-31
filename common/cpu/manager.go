@@ -40,11 +40,11 @@ func (cpu *CPU) Start(percentage int) (string, error) {
 	cpu.mu.Lock()
 	defer cpu.mu.Unlock()
 
-	cpu.stop = make(chan int)
-
 	if cpu.status == started {
 		return "Could not inject cpu failure", errors.New("CPU injection already running. Stop it before starting another")
 	}
+
+        cpu.stop = make(chan int)
 
 	if err := cpu.injection(percentage); err != nil {
 		return "Could not inject cpu failure", err
