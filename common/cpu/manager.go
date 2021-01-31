@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"sync"
 	"time"
 
@@ -35,7 +36,7 @@ func New(logger log.Logger) *CPU {
 }
 
 // Start will perform a cpu failure injection by starting goroutines in for loops
-func (cpu *CPU) Start(threads int) (string, error) {
+func (cpu *CPU) Start(percentage int) (string, error) {
 	cpu.mu.Lock()
 	defer cpu.mu.Unlock()
 
@@ -45,7 +46,7 @@ func (cpu *CPU) Start(threads int) (string, error) {
 		return "Could not inject cpu failure", errors.New("CPU injection already running. Stop it before starting another")
 	}
 
-	if err := cpu.injection(threads); err != nil {
+	if err := cpu.injection(percentage); err != nil {
 		return "Could not inject cpu failure", err
 	}
 
@@ -68,31 +69,28 @@ func (cpu *CPU) Stop() (string, error) {
 	return constructMessage(cpu.logger, "stopped"), nil
 }
 
-func (cpu *CPU) injection(threads int) error {
-	if threads <= 0 {
-		return errors.New("base on the percentage specified and your number of CPUs we can only block 0 cpu cores. ( CPU num * percentage / 100 )")
+func (cpu *CPU) injection(percent int) error {
+	if percent < 0 || percent > 100 {
+		return fmt.Errorf("cpu injection percentage %d is out of bounds. should be 0 to 100", percent)
 	}
-
-	for i := 0; i < threads; i++ {
+	val := time.Duration(1000 * (100 - percent) / 100)
+	for i := 0; i < runtime.NumCPU(); i++ {
+		time.Sleep(time.Duration(1000/runtime.NumCPU()) * time.Millisecond)
 		go func() {
-			tempMin := 0
+			ticker := time.NewTicker(1 * time.Second)
 			for {
-				_, minutes, _ := time.Now().Clock()
 				select {
 				case <-cpu.stop:
 					return
+				case <-ticker.C:
+					time.Sleep(val * time.Millisecond)
 				default: //nolint:staticcheck
-					if tempMin != minutes {
-						_ = level.Info(cpu.logger).Log("msg", "inject cpu failure")
-						tempMin = minutes
-					}
-					// left empty on purpose for cpu failure injection
 				}
 			}
 		}()
 	}
 
-	_ = level.Info(cpu.logger).Log("msg", fmt.Sprintf("Starting cpu injection by spawning %d goroutines", threads))
+	_ = level.Info(cpu.logger).Log("msg", fmt.Sprintf("Starting cpu injection for %d%%", percent))
 
 	return nil
 }

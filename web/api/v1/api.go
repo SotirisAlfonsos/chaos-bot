@@ -3,7 +3,6 @@ package v1
 import (
 	"context"
 	"fmt"
-	"runtime"
 
 	"github.com/SotirisAlfonsos/chaos-bot/common"
 	"github.com/SotirisAlfonsos/chaos-bot/common/cpu"
@@ -112,12 +111,7 @@ type CPUManager struct {
 }
 
 func (cm *CPUManager) Start(ctx context.Context, req *v1.CPURequest) (*v1.StatusResponse, error) {
-	if req.Percentage < 0 || req.Percentage > 100 {
-		err := fmt.Errorf("cpu injection percentage %d is out of bounds. should be 0 to 100", req.Percentage)
-		return prepareResponse("Could not inject CPU failure", err)
-	}
-
-	message, err := cm.CPU.Start(runtime.NumCPU() * int(req.Percentage) / 100)
+	message, err := cm.CPU.Start(int(req.Percentage))
 	return prepareResponse(message, err)
 }
 

@@ -197,19 +197,13 @@ func recoverDocker(sm *StrategyManager, dockerName string, t *testing.T, hostnam
 	assert.Equal(t, 0, sm.Cache.ItemCount())
 }
 
-// === End to end testing ===
-func TestCPUManager_e2e(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
+func TestCPUManager_Start_Stop(t *testing.T) {
 	logger := getLogger()
 	hostname, _ := os.Hostname()
 
 	cm := &CPUManager{CPU: cpu.New(logger), Logger: logger}
 
 	startCPU(cm, int32(100), t, hostname)
-	startWithInvalidPercentage(cm, int32(101), t)
 	startCPUFailure(cm, int32(100), t)
 	stopCPU(cm, t, hostname)
 }
@@ -223,17 +217,6 @@ func startCPU(cm *CPUManager, percentage int32, t *testing.T, hostname string) {
 	expectedMessage := fmt.Sprintf("Bot %s started cpu injection", hostname)
 
 	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Status)
-	assert.Equal(t, expectedMessage, resp.Message)
-}
-
-func startWithInvalidPercentage(cm *CPUManager, percentage int32, t *testing.T) {
-	resp, err := cm.Start(context.TODO(), &v1.CPURequest{Percentage: percentage})
-
-	expectedMessage := "Could not inject CPU failure"
-
-	assert.NotNil(t, err)
-	assert.Equal(t, "cpu injection percentage 101 is out of bounds. should be 0 to 100", err.Error())
-	assert.Equal(t, v1.StatusResponse_FAIL, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)
 }
 
