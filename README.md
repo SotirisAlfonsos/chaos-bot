@@ -12,6 +12,7 @@ The [chaos master](https://github.com/SotirisAlfonsos/chaos-master) is responsib
 - &check; Docker outage: The selected Container is killed 
 - &check; Services outage: The selected Service is killed
 - &check; Cpu spikes: Create CPU spike based on percentage.
+- &check; Server outage: The current server will be shut down
 - <i>(Coming soon)</i>
   - Network & package failures
   - Memory spike injection
