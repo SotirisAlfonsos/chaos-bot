@@ -45,6 +45,8 @@ github.com/go-kit/kit/log/level
 github.com/go-logfmt/logfmt
 # github.com/gogo/protobuf v1.3.1
 github.com/gogo/protobuf/proto
+# github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6
+github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.4.3
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
@@ -68,6 +70,12 @@ github.com/sirupsen/logrus
 github.com/stretchr/testify/assert
 # github.com/takama/daemon v1.0.0
 github.com/takama/daemon
+# go.opencensus.io v0.22.2
+go.opencensus.io
+go.opencensus.io/internal
+go.opencensus.io/trace
+go.opencensus.io/trace/internal
+go.opencensus.io/trace/tracestate
 # golang.org/x/net v0.0.0-20201209123823-ac852fbbde11
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2

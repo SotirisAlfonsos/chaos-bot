@@ -7,6 +7,8 @@ import (
 	"net"
 	"strings"
 
+	"github.com/SotirisAlfonsos/chaos-bot/common/server"
+
 	"github.com/SotirisAlfonsos/chaos-bot/common/cpu"
 	"github.com/SotirisAlfonsos/chaos-bot/config"
 	v1 "github.com/SotirisAlfonsos/chaos-bot/proto/grpc/v1"
@@ -133,8 +135,8 @@ func (h *GRPCHandler) registerServices() {
 		CPU:    cpu.New(h.Logger),
 		Logger: h.Logger,
 	})
-	v1.RegisterStrategyServer(h.GRPCServer, &api.StrategyManager{
-		Cache:  h.cache,
+	v1.RegisterServerServer(h.GRPCServer, &api.ServerManager{
+		Server: server.New(h.Logger),
 		Logger: h.Logger,
 	})
 }

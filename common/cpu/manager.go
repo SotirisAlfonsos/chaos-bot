@@ -44,7 +44,7 @@ func (cpu *CPU) Start(percentage int) (string, error) {
 		return "Could not inject cpu failure", errors.New("CPU injection already running. Stop it before starting another")
 	}
 
-        cpu.stop = make(chan int)
+	cpu.stop = make(chan int)
 
 	if err := cpu.injection(percentage); err != nil {
 		return "Could not inject cpu failure", err

@@ -19,8 +19,8 @@ service CPU {
     rpc Stop(CPURequest) returns (StatusResponse) {};
 }
 
-service Strategy {
-    rpc Recover(RecoverRequest) returns (ResolveResponse) {};
+service Server {
+    rpc Stop(ServerRequest) returns (StatusResponse) {};
 }
 
 message ServiceRequest {
@@ -37,8 +37,7 @@ message CPURequest {
     int32 percentage = 1;
 }
 
-message RecoverRequest {
-}
+message ServerRequest {}
 
 message StatusResponse {
     enum Status{
@@ -47,8 +46,4 @@ message StatusResponse {
     }
     Status status = 1;
     string message = 2;
-}
-
-message ResolveResponse {
-    repeated StatusResponse response = 1;
 }

@@ -27,6 +27,27 @@ func TestHealthCheckService_Check(t *testing.T) {
 	assert.Equal(t, v1.HealthCheckResponse_SERVING, resp.Status)
 }
 
+type TestServer struct {
+}
+
+func (ts *TestServer) StopUnix() (string, error) {
+	return "success", nil
+}
+
+func TestStopServer(t *testing.T) {
+	logger := getLogger()
+
+	testServer := &TestServer{}
+	serverHandler := &ServerManager{
+		Server: testServer,
+		Logger: logger,
+	}
+
+	statusResponse, err := serverHandler.Stop(context.TODO(), &v1.ServerRequest{})
+	assert.Nil(t, err)
+	assert.Equal(t, v1.StatusResponse_SUCCESS, statusResponse.Status)
+}
+
 // === End to end testing ===
 func TestServiceManager_e2e(t *testing.T) {
 	if testing.Short() {
@@ -39,13 +60,9 @@ func TestServiceManager_e2e(t *testing.T) {
 	hostname, _ := os.Hostname()
 
 	sm := &ServiceManager{Cache: myCache, Logger: logger}
-	stratM := &StrategyManager{Cache: myCache, Logger: logger}
 
 	startService(sm, serviceName, t, hostname)
 	startServiceFail(sm, serviceName, t)
-	recoverServiceEmpty(stratM, serviceName, t)
-	stopService(sm, serviceName, t, hostname)
-	recoverService(stratM, serviceName, t, hostname)
 	stopService(sm, serviceName, t, hostname)
 }
 
@@ -96,34 +113,6 @@ func stopService(sm *ServiceManager, serviceName string, t *testing.T, hostname 
 	assert.Equal(t, 1, sm.Cache.ItemCount())
 }
 
-func recoverService(sm *StrategyManager, serviceName string, t *testing.T, hostname string) {
-	resp, err := sm.Recover(context.TODO(), &v1.RecoverRequest{})
-	if err != nil {
-		t.Fatalf("Error in Service Recover request. err=%s", err)
-	}
-
-	expectedMessage := fmt.Sprintf("Bot %s started service %s", hostname, serviceName)
-	_, ok := sm.Cache.Get(serviceName)
-
-	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Response[0].Status)
-	assert.Equal(t, expectedMessage, resp.Response[0].Message)
-	assert.False(t, ok)
-	assert.Equal(t, 0, sm.Cache.ItemCount())
-}
-
-func recoverServiceEmpty(sm *StrategyManager, serviceName string, t *testing.T) {
-	resp, err := sm.Recover(context.TODO(), &v1.RecoverRequest{})
-	if err != nil {
-		t.Fatalf("Error in Service Recover request. err=%s", err)
-	}
-
-	_, ok := sm.Cache.Get(serviceName)
-
-	assert.Equal(t, 0, len(resp.Response))
-	assert.False(t, ok)
-	assert.Equal(t, 0, sm.Cache.ItemCount())
-}
-
 // === End to end testing ===
 func TestDockerManager_e2e(t *testing.T) {
 	if testing.Short() {
@@ -136,12 +125,8 @@ func TestDockerManager_e2e(t *testing.T) {
 	hostname, _ := os.Hostname()
 
 	dm := &DockerManager{Cache: myCache, Logger: logger}
-	stratM := &StrategyManager{Cache: myCache, Logger: logger}
 
 	startDocker(dm, dockerName, t, hostname)
-	recoverDockerEmpty(stratM, dockerName, t)
-	stopDocker(dm, dockerName, t, hostname)
-	recoverDocker(stratM, dockerName, t, hostname)
 	stopDocker(dm, dockerName, t, hostname)
 }
 
@@ -157,19 +142,6 @@ func startDocker(dm *DockerManager, dockerName string, t *testing.T, hostname st
 	assert.Equal(t, expectedMessage, resp.Message)
 }
 
-func recoverDockerEmpty(sm *StrategyManager, dockerName string, t *testing.T) {
-	resp, err := sm.Recover(context.TODO(), &v1.RecoverRequest{})
-	if err != nil {
-		t.Fatalf("Error in Docker recover Start request. err=%s", err)
-	}
-
-	_, ok := sm.Cache.Get(dockerName)
-
-	assert.Equal(t, 0, len(resp.Response))
-	assert.False(t, ok)
-	assert.Equal(t, 0, sm.Cache.ItemCount())
-}
-
 func stopDocker(dm *DockerManager, dockerName string, t *testing.T, hostname string) {
 	resp, err := dm.Stop(context.TODO(), &v1.DockerRequest{Name: dockerName})
 	if err != nil {
@@ -180,21 +152,6 @@ func stopDocker(dm *DockerManager, dockerName string, t *testing.T, hostname str
 
 	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)
-}
-
-func recoverDocker(sm *StrategyManager, dockerName string, t *testing.T, hostname string) {
-	resp, err := sm.Recover(context.TODO(), &v1.RecoverRequest{})
-	if err != nil {
-		t.Fatalf("Error in Docker recover Start request. err=%s", err)
-	}
-
-	expectedMessage := fmt.Sprintf("Bot %s started docker container %s", hostname, dockerName)
-	_, ok := sm.Cache.Get(dockerName)
-
-	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Response[0].Status)
-	assert.Equal(t, expectedMessage, resp.Response[0].Message)
-	assert.False(t, ok)
-	assert.Equal(t, 0, sm.Cache.ItemCount())
 }
 
 func TestCPUManager_Start_Stop(t *testing.T) {
