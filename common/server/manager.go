@@ -28,6 +28,7 @@ func New(logger log.Logger) Server {
 // StopUnix will stop a Unix server after one minute
 func (ds *DefaultServer) StopUnix() (string, error) {
 	go func() {
+		_ = level.Info(ds.logger).Log("msg", "server will be shutdown in one minute")
 		time.Sleep(1 * time.Minute)
 		err := syscall.Reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
 		if err != nil {

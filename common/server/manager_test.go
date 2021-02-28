@@ -9,10 +9,6 @@ import (
 )
 
 func TestServerShutdown(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
 	hostname := getHostname()
 
 	server := &DefaultServer{}
