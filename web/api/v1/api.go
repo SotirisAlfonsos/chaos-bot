@@ -2,18 +2,15 @@ package v1
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/SotirisAlfonsos/chaos-bot/common/server"
 
 	"github.com/SotirisAlfonsos/chaos-bot/common"
 	"github.com/SotirisAlfonsos/chaos-bot/common/cpu"
 	"github.com/SotirisAlfonsos/chaos-bot/common/docker"
+	"github.com/SotirisAlfonsos/chaos-bot/common/server"
 	"github.com/SotirisAlfonsos/chaos-bot/common/service"
 	v1 "github.com/SotirisAlfonsos/chaos-bot/proto/grpc/v1"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/patrickmn/go-cache"
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,19 +22,17 @@ type HealthCheckService struct {
 }
 
 // Check the health of the chaos bot
-func (hcs *HealthCheckService) Check(ctx context.Context,
-	req *v1.HealthCheckRequest) (*v1.HealthCheckResponse, error) {
+func (hcs *HealthCheckService) Check(context.Context, *v1.HealthCheckRequest) (*v1.HealthCheckResponse, error) {
 	return &v1.HealthCheckResponse{Status: v1.HealthCheckResponse_SERVING}, nil
 }
 
 // Watch is not used at the moment
-func (hcs *HealthCheckService) Watch(req *v1.HealthCheckRequest, srv v1.Health_WatchServer) error {
+func (hcs *HealthCheckService) Watch(*v1.HealthCheckRequest, v1.Health_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
 }
 
 // ServiceManager is the rpc for services management
 type ServiceManager struct {
-	Cache  *cache.Cache
 	Logger log.Logger
 	*v1.UnimplementedServiceServer
 }
@@ -47,7 +42,7 @@ type response struct {
 	err     error
 }
 
-// Start a service based on the name. Delete the item from the cache if it had been cached previously
+// Start a service based on the name
 func (sm *ServiceManager) Start(ctx context.Context, req *v1.ServiceRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.service.Start")
 	defer span.End()
@@ -57,7 +52,7 @@ func (sm *ServiceManager) Start(ctx context.Context, req *v1.ServiceRequest) (*v
 	serviceManage := &service.Service{JobName: req.JobName, Name: req.Name, Logger: sm.Logger}
 
 	go func() {
-		resp <- startTarget(serviceManage, sm.Cache, req.Name)
+		resp <- startTarget(serviceManage)
 	}()
 
 	select {
@@ -70,7 +65,7 @@ func (sm *ServiceManager) Start(ctx context.Context, req *v1.ServiceRequest) (*v
 	}
 }
 
-// Stop a service based on the name. Cache it if the service is stopped successfully
+// Stop a service based on the name
 func (sm *ServiceManager) Stop(ctx context.Context, req *v1.ServiceRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.service.Stop")
 	defer span.End()
@@ -80,7 +75,7 @@ func (sm *ServiceManager) Stop(ctx context.Context, req *v1.ServiceRequest) (*v1
 	serviceManage := &service.Service{JobName: req.JobName, Name: req.Name, Logger: sm.Logger}
 
 	go func() {
-		resp <- stopTarget(serviceManage, sm.Cache, req.Name, sm.Logger)
+		resp <- stopTarget(serviceManage)
 	}()
 
 	select {
@@ -95,12 +90,11 @@ func (sm *ServiceManager) Stop(ctx context.Context, req *v1.ServiceRequest) (*v1
 
 // DockerManager is the rpc for docker management
 type DockerManager struct {
-	Cache  *cache.Cache
 	Logger log.Logger
 	*v1.UnimplementedDockerServer
 }
 
-// Start a docker container based on the name. Delete the item from the cache if it had been cached previously
+// Start a docker container based on the name
 func (dm *DockerManager) Start(ctx context.Context, req *v1.DockerRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.docker.Start")
 	defer span.End()
@@ -109,7 +103,7 @@ func (dm *DockerManager) Start(ctx context.Context, req *v1.DockerRequest) (*v1.
 	dockerManage := &docker.Docker{JobName: req.JobName, Name: req.Name, Logger: dm.Logger}
 
 	go func() {
-		resp <- startTarget(dockerManage, dm.Cache, req.Name)
+		resp <- startTarget(dockerManage)
 	}()
 
 	select {
@@ -122,7 +116,7 @@ func (dm *DockerManager) Start(ctx context.Context, req *v1.DockerRequest) (*v1.
 	}
 }
 
-// Stop a docker container based on the name. Cache it if the docker container is stopped successfully
+// Stop a docker container based on the name
 func (dm *DockerManager) Stop(ctx context.Context, req *v1.DockerRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.docker.Stop")
 	defer span.End()
@@ -132,7 +126,7 @@ func (dm *DockerManager) Stop(ctx context.Context, req *v1.DockerRequest) (*v1.S
 	dockerManage := &docker.Docker{JobName: req.JobName, Name: req.Name, Logger: dm.Logger}
 
 	go func() {
-		resp <- stopTarget(dockerManage, dm.Cache, req.Name, dm.Logger)
+		resp <- stopTarget(dockerManage)
 	}()
 
 	select {
@@ -145,11 +139,8 @@ func (dm *DockerManager) Stop(ctx context.Context, req *v1.DockerRequest) (*v1.S
 	}
 }
 
-func startTarget(target common.Target, cache *cache.Cache, name string) response {
+func startTarget(target common.Target) response {
 	message, err := target.Start()
-	if err == nil {
-		cache.Delete(name)
-	}
 
 	return response{
 		message: message,
@@ -157,14 +148,8 @@ func startTarget(target common.Target, cache *cache.Cache, name string) response
 	}
 }
 
-func stopTarget(target common.Target, cache *cache.Cache, name string, logger log.Logger) response {
+func stopTarget(target common.Target) response {
 	message, err := target.Stop()
-	if err == nil {
-		if cacheErr := cache.Add(name, target, 0); cacheErr != nil {
-			_ = level.Error(logger).Log("msg",
-				fmt.Sprintf("Could not update cache after stopping target %s", name), "err", cacheErr)
-		}
-	}
 
 	return response{
 		message: message,
@@ -198,7 +183,7 @@ func (cm *CPUManager) Start(ctx context.Context, req *v1.CPURequest) (*v1.Status
 	}
 }
 
-func (cm *CPUManager) Stop(ctx context.Context, req *v1.CPURequest) (*v1.StatusResponse, error) {
+func (cm *CPUManager) Stop(ctx context.Context, _ *v1.CPURequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.cpu.Stop")
 	defer span.End()
 
@@ -242,7 +227,7 @@ type ServerManager struct {
 	*v1.UnimplementedServerServer
 }
 
-func (sm *ServerManager) Stop(ctx context.Context, req *v1.ServerRequest) (*v1.StatusResponse, error) {
+func (sm *ServerManager) Stop(ctx context.Context, _ *v1.ServerRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.server.Stop")
 	defer span.End()
 

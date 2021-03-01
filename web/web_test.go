@@ -11,7 +11,6 @@ import (
 	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )
@@ -145,8 +144,7 @@ func TestStopServiceGRPCSuccess(t *testing.T) {
 }
 
 func withTestGRPCServer(t *testing.T, port string, done chan struct{}, errOnGRPCHandlerRun chan error) {
-	myCache := cache.New(0, 0)
-	GRPCHandler, err := NewGRPCHandler(port, logger, myCache, &config.Config{})
+	GRPCHandler, err := NewGRPCHandler(port, logger, &config.Config{})
 	if err != nil {
 		t.Fatalf("Could not create grpc handler")
 	}

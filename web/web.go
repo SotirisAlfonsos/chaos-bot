@@ -15,7 +15,6 @@ import (
 	api "github.com/SotirisAlfonsos/chaos-bot/web/api/v1"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -24,12 +23,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// GRPCHandler is holding the cache and GRPC configuration
+// GRPCHandler is holding the GRPC configuration
 type GRPCHandler struct {
 	Port       string
 	Logger     log.Logger
 	GRPCServer *grpc.Server
-	cache      *cache.Cache
 }
 
 type AuthInterceptor struct {
@@ -40,7 +38,6 @@ type AuthInterceptor struct {
 func NewGRPCHandler(
 	port string,
 	logger log.Logger,
-	cache *cache.Cache,
 	conf *config.Config,
 ) (*GRPCHandler, error) {
 	opts := make([]grpc.ServerOption, 0)
@@ -62,7 +59,7 @@ func NewGRPCHandler(
 
 	GRPCServer := grpc.NewServer(opts...)
 
-	return &GRPCHandler{port, logger, GRPCServer, cache}, nil
+	return &GRPCHandler{port, logger, GRPCServer}, nil
 }
 
 func loadTLSCredentials(certFile string, keyFile string) (credentials.TransportCredentials, error) {
@@ -124,11 +121,9 @@ func (h *GRPCHandler) Run() error {
 func (h *GRPCHandler) registerServices() {
 	v1.RegisterHealthServer(h.GRPCServer, &api.HealthCheckService{})
 	v1.RegisterServiceServer(h.GRPCServer, &api.ServiceManager{
-		Cache:  h.cache,
 		Logger: h.Logger,
 	})
 	v1.RegisterDockerServer(h.GRPCServer, &api.DockerManager{
-		Cache:  h.cache,
 		Logger: h.Logger,
 	})
 	v1.RegisterCPUServer(h.GRPCServer, &api.CPUManager{

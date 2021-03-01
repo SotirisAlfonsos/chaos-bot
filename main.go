@@ -6,12 +6,10 @@ import (
 	"os"
 
 	"github.com/SotirisAlfonsos/chaos-bot/config"
-
 	"github.com/SotirisAlfonsos/chaos-bot/web"
 	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/patrickmn/go-cache"
 )
 
 func main() {
@@ -33,7 +31,6 @@ func main() {
 	flag.Parse()
 
 	logger := createLogger(*debugLevel)
-	myCache := cache.New(0, 0)
 
 	conf, err := config.GetConfig(*configFile)
 	if err != nil {
@@ -41,7 +38,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	grpcHandler, err := web.NewGRPCHandler(*port, logger, myCache, conf)
+	grpcHandler, err := web.NewGRPCHandler(*port, logger, conf)
 	if err != nil {
 		_ = level.Error(logger).Log("err", err)
 		os.Exit(1)

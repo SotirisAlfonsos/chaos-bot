@@ -8,12 +8,14 @@ import (
 
 	"github.com/SotirisAlfonsos/chaos-bot/common/cpu"
 
-	"github.com/SotirisAlfonsos/chaos-bot/common/service"
 	v1 "github.com/SotirisAlfonsos/chaos-bot/proto/grpc/v1"
 	"github.com/SotirisAlfonsos/chaos-master/chaoslogger"
 	"github.com/go-kit/kit/log"
-	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
+)
+
+var (
+	logger = getLogger()
 )
 
 func TestHealthCheckService_Check(t *testing.T) {
@@ -35,8 +37,6 @@ func (ts *TestServer) StopUnix() (string, error) {
 }
 
 func TestStopServer(t *testing.T) {
-	logger := getLogger()
-
 	testServer := &TestServer{}
 	serverHandler := &ServerManager{
 		Server: testServer,
@@ -54,12 +54,10 @@ func TestServiceManager_e2e(t *testing.T) {
 		t.Skip("skipping testing in short mode")
 	}
 
-	logger := getLogger()
-	myCache := cache.New(0, 0)
 	serviceName := "simple"
 	hostname, _ := os.Hostname()
 
-	sm := &ServiceManager{Cache: myCache, Logger: logger}
+	sm := &ServiceManager{Logger: logger}
 
 	startService(sm, serviceName, t, hostname)
 	startServiceFail(sm, serviceName, t)
@@ -73,25 +71,19 @@ func startService(sm *ServiceManager, serviceName string, t *testing.T, hostname
 	}
 
 	expectedMessage := fmt.Sprintf("Bot %s started service %s", hostname, serviceName)
-	_, ok := sm.Cache.Get(serviceName)
 
 	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)
-	assert.False(t, ok)
-	assert.Equal(t, 0, sm.Cache.ItemCount())
 }
 
 func startServiceFail(sm *ServiceManager, serviceName string, t *testing.T) {
 	resp, err := sm.Start(context.TODO(), &v1.ServiceRequest{Name: serviceName})
 
 	expectedMessage := fmt.Sprintf("Could not start service %s", serviceName)
-	_, ok := sm.Cache.Get(serviceName)
 
 	assert.Error(t, err)
 	assert.Equal(t, v1.StatusResponse_FAIL, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)
-	assert.False(t, ok)
-	assert.Equal(t, 0, sm.Cache.ItemCount())
 }
 
 func stopService(sm *ServiceManager, serviceName string, t *testing.T, hostname string) {
@@ -101,16 +93,9 @@ func stopService(sm *ServiceManager, serviceName string, t *testing.T, hostname 
 	}
 
 	expectedMessage := fmt.Sprintf("Bot %s stopped service %s", hostname, serviceName)
-	serviceObj, ok := sm.Cache.Get(serviceName)
-
-	if !ok {
-		t.Fatalf(fmt.Sprintf("Could not retrieve item %s from cache", serviceName))
-	}
 
 	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)
-	assert.Equal(t, serviceName, serviceObj.(*service.Service).Name)
-	assert.Equal(t, 1, sm.Cache.ItemCount())
 }
 
 // === End to end testing ===
@@ -119,12 +104,10 @@ func TestDockerManager_e2e(t *testing.T) {
 		t.Skip("skipping testing in short mode")
 	}
 
-	logger := getLogger()
-	myCache := cache.New(0, 0)
 	dockerName := "zookeeper"
 	hostname, _ := os.Hostname()
 
-	dm := &DockerManager{Cache: myCache, Logger: logger}
+	dm := &DockerManager{Logger: logger}
 
 	startDocker(dm, dockerName, t, hostname)
 	stopDocker(dm, dockerName, t, hostname)
@@ -155,7 +138,6 @@ func stopDocker(dm *DockerManager, dockerName string, t *testing.T, hostname str
 }
 
 func TestCPUManager_Start_Stop(t *testing.T) {
-	logger := getLogger()
 	hostname, _ := os.Hostname()
 
 	cm := &CPUManager{CPU: cpu.New(logger), Logger: logger}
