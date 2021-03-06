@@ -87,7 +87,7 @@ func startServiceFail(sm *ServiceManager, serviceName string, t *testing.T) {
 }
 
 func stopService(sm *ServiceManager, serviceName string, t *testing.T, hostname string) {
-	resp, err := sm.Stop(context.TODO(), &v1.ServiceRequest{JobName: serviceName, Name: serviceName})
+	resp, err := sm.Stop(context.TODO(), &v1.ServiceRequest{Name: serviceName})
 	if err != nil {
 		t.Fatalf("Error in Service Stop request. err=%s", err)
 	}
@@ -153,7 +153,7 @@ func startCPU(cm *CPUManager, percentage int32, t *testing.T, hostname string) {
 		t.Fatalf("Error in CPU Start request. err=%s", err)
 	}
 
-	expectedMessage := fmt.Sprintf("Bot %s started cpu injection", hostname)
+	expectedMessage := fmt.Sprintf("Bot %s started cpu injection at %d%%", hostname, percentage)
 
 	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)
@@ -177,6 +177,54 @@ func stopCPU(cm *CPUManager, t *testing.T, hostname string) {
 	}
 
 	expectedMessage := fmt.Sprintf("Bot %s stopped cpu injection", hostname)
+
+	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Status)
+	assert.Equal(t, expectedMessage, resp.Message)
+}
+
+// === End to end testing ===
+func TestNetworkManager_e2e(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping testing in short mode")
+	}
+
+	device := "lo"
+	hostname, _ := os.Hostname()
+
+	nm := NewNetworkManager(logger)
+
+	startNetwork(t, nm, device, hostname)
+	stopNetwork(t, nm, device, hostname)
+}
+
+func startNetwork(t *testing.T, nm *NetworkManager, device string, hostname string) {
+	networkRequest := &v1.NetworkRequest{
+		Device:  device,
+		Latency: 10,
+	}
+
+	resp, err := nm.Start(context.TODO(), networkRequest)
+	if err != nil {
+		t.Fatalf("Error in Network Start request. err=%s", err)
+	}
+
+	expectedMessage := fmt.Sprintf("Bot %s started network injection with details {Latency: 156250, Limit: 1000, Loss: 0, Gap: 0, Duplicate: 0, Jitter: 0}", hostname)
+
+	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Status)
+	assert.Equal(t, expectedMessage, resp.Message)
+}
+
+func stopNetwork(t *testing.T, nm *NetworkManager, device string, hostname string) {
+	networkRequest := &v1.NetworkRequest{
+		Device: device,
+	}
+
+	resp, err := nm.Stop(context.TODO(), networkRequest)
+	if err != nil {
+		t.Fatalf("Error in Network Stop request. err=%s", err)
+	}
+
+	expectedMessage := fmt.Sprintf("Bot %s stopped network injection", hostname)
 
 	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Status)
 	assert.Equal(t, expectedMessage, resp.Message)

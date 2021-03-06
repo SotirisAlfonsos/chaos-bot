@@ -23,14 +23,17 @@ service Server {
     rpc Stop(ServerRequest) returns (StatusResponse) {};
 }
 
+service Network {
+    rpc Start(NetworkRequest) returns (StatusResponse) {};
+    rpc Stop(NetworkRequest) returns (StatusResponse) {};
+}
+
 message ServiceRequest {
-    string jobName = 1;
-    string name = 2;
+    string name = 1;
 }
 
 message DockerRequest {
-    string jobName = 1;
-    string name = 2;
+    string name = 1;
 }
 
 message CPURequest {
@@ -38,6 +41,23 @@ message CPURequest {
 }
 
 message ServerRequest {}
+
+message NetworkRequest {
+    string device = 1;
+    uint32 latency =2;
+    float delayCorr =3;
+    uint32 limit =4;
+    float loss =5;
+    float lossCorr =6;
+    uint32 gap =7;
+    float duplicate =8;
+    float duplicateCorr =9;
+    uint32 jitter =10;
+    float reorderProb = 11;
+    float reorderCorr = 12;
+    float corruptProb =13;
+    float corruptCorr =14;
+}
 
 message StatusResponse {
     enum Status{

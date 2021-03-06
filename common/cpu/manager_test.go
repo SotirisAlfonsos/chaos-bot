@@ -28,7 +28,7 @@ func TestCPU_Start_and_Stop(t *testing.T) {
 			message:    "Start and stop cpu experiment for single thread",
 			percentage: 50,
 			expected: map[string]string{
-				"start": fmt.Sprintf("Bot %s started cpu injection", getHostname(t)),
+				"start": fmt.Sprintf("Bot %s started cpu injection at %d%%", getHostname(t), 50),
 				"stop":  fmt.Sprintf("Bot %s stopped cpu injection", getHostname(t)),
 			},
 		},

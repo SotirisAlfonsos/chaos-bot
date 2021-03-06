@@ -13,57 +13,56 @@ import (
 
 // Docker is the interface implementation that manages chaos on Docker
 type Docker struct {
-	JobName string
-	Name    string
-	Logger  log.Logger
+	Name   string
+	Logger log.Logger
 }
 
 // Start will perform a docker start on the container specified
-func (s *Docker) Start() (string, error) {
+func (d *Docker) Start() (string, error) {
 	dockerClient, err := client.NewClientWithOpts()
 	if err != nil {
-		_ = level.Error(s.Logger).Log("msg", "Could not instantiate docker client", "err", err)
+		_ = level.Error(d.Logger).Log("msg", "Could not instantiate docker client", "err", err)
 		return "Could not instantiate docker client", err
 	}
 
-	containerID, getIDErr := getContainerID(dockerClient, s.Name)
+	containerID, getIDErr := getContainerID(dockerClient, d.Name)
 	if getIDErr != nil {
-		_ = level.Error(s.Logger).Log("msg", "Could not get list of containers", "err", getIDErr)
+		_ = level.Error(d.Logger).Log("msg", "Could not get list of containers", "err", getIDErr)
 	}
 
 	errStart := dockerClient.ContainerStart(context.Background(), containerID, types.ContainerStartOptions{})
 	if errStart != nil {
-		_ = level.Error(s.Logger).Log("msg", fmt.Sprintf("Could not start docker container %s", containerID), "err", errStart)
+		_ = level.Error(d.Logger).Log("msg", fmt.Sprintf("Could not start docker container %s", containerID), "err", errStart)
 		return fmt.Sprintf("Could not start docker container %s", containerID), errStart
 	}
 
-	_ = level.Info(s.Logger).Log("msg", fmt.Sprintf("Started container with id %s", containerID))
+	_ = level.Info(d.Logger).Log("msg", fmt.Sprintf("Started container with id %s", containerID))
 
-	return constructMessage(s.Logger, "started", containerID), nil
+	return constructMessage(d.Logger, "started", containerID), nil
 }
 
 // Stop will perform a docker stop on the container specified
-func (s *Docker) Stop() (string, error) {
+func (d *Docker) Stop() (string, error) {
 	dockerClient, err := client.NewClientWithOpts()
 	if err != nil {
-		_ = level.Error(s.Logger).Log("msg", "Could not instantiate docker client", "err", err)
+		_ = level.Error(d.Logger).Log("msg", "Could not instantiate docker client", "err", err)
 		return "Could not instantiate docker client", err
 	}
 
-	containerID, getIDErr := getContainerID(dockerClient, s.Name)
+	containerID, getIDErr := getContainerID(dockerClient, d.Name)
 	if getIDErr != nil {
-		_ = level.Error(s.Logger).Log("msg", "Could not get list of containers", "err", getIDErr)
+		_ = level.Error(d.Logger).Log("msg", "Could not get list of containers", "err", getIDErr)
 	}
 
 	errStop := dockerClient.ContainerStop(context.Background(), containerID, nil)
 	if errStop != nil {
-		_ = level.Error(s.Logger).Log("msg", fmt.Sprintf("Could not stop docker container %s", containerID), "err", errStop)
+		_ = level.Error(d.Logger).Log("msg", fmt.Sprintf("Could not stop docker container %s", containerID), "err", errStop)
 		return fmt.Sprintf("Could not stop docker container %s", containerID), errStop
 	}
 
-	_ = level.Info(s.Logger).Log("msg", fmt.Sprintf("Stopped container with id %s", containerID))
+	_ = level.Info(d.Logger).Log("msg", fmt.Sprintf("Stopped container with id %s", containerID))
 
-	return constructMessage(s.Logger, "stopped", s.Name), nil
+	return constructMessage(d.Logger, "stopped", d.Name), nil
 }
 
 func constructMessage(logger log.Logger, action string, name string) string {

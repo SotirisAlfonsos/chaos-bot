@@ -51,7 +51,7 @@ func (cpu *CPU) Start(percentage int) (string, error) {
 	}
 
 	cpu.status = started
-	return constructMessage(cpu.logger, "started"), nil
+	return constructStartMessage(cpu.logger, percentage), nil
 }
 
 // Start will recover cpu failure by closing all channels
@@ -73,7 +73,9 @@ func (cpu *CPU) injection(percent int) error {
 	if percent < 0 || percent > 100 {
 		return fmt.Errorf("cpu injection percentage %d is out of bounds. should be 0 to 100", percent)
 	}
-	val := time.Duration(1000 * (100 - percent) / 100)
+
+	sleepBaseOnPercentage := time.Duration(1000 * (100 - percent) / 100)
+
 	for i := 0; i < runtime.NumCPU(); i++ {
 		time.Sleep(time.Duration(1000/runtime.NumCPU()) * time.Millisecond)
 		go func() {
@@ -83,7 +85,7 @@ func (cpu *CPU) injection(percent int) error {
 				case <-cpu.stop:
 					return
 				case <-ticker.C:
-					time.Sleep(val * time.Millisecond)
+					time.Sleep(sleepBaseOnPercentage * time.Millisecond)
 				default: //nolint:staticcheck
 				}
 			}
@@ -93,6 +95,11 @@ func (cpu *CPU) injection(percent int) error {
 	_ = level.Info(cpu.logger).Log("msg", fmt.Sprintf("Starting cpu injection for %d%%", percent))
 
 	return nil
+}
+
+func constructStartMessage(logger log.Logger, percentage int) string {
+	message := constructMessage(logger, "started")
+	return fmt.Sprintf("%s at %d%%", message, percentage)
 }
 
 func constructMessage(logger log.Logger, action string) string {

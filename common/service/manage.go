@@ -11,9 +11,8 @@ import (
 
 // Service is the interface implementation that manages chaos on services
 type Service struct {
-	JobName string
-	Name    string
-	Logger  log.Logger
+	Name   string
+	Logger log.Logger
 }
 
 // Start will perform a service start on the service specified

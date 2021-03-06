@@ -68,6 +68,11 @@ github.com/sirupsen/logrus
 github.com/stretchr/testify/assert
 # github.com/takama/daemon v1.0.0
 github.com/takama/daemon
+# github.com/vishvananda/netlink v1.1.0
+github.com/vishvananda/netlink
+github.com/vishvananda/netlink/nl
+# github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df
+github.com/vishvananda/netns
 # go.opencensus.io v0.22.2
 go.opencensus.io
 go.opencensus.io/internal

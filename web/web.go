@@ -7,12 +7,11 @@ import (
 	"net"
 	"strings"
 
-	"github.com/SotirisAlfonsos/chaos-bot/common/server"
-
 	"github.com/SotirisAlfonsos/chaos-bot/common/cpu"
+	"github.com/SotirisAlfonsos/chaos-bot/common/server"
 	"github.com/SotirisAlfonsos/chaos-bot/config"
-	v1 "github.com/SotirisAlfonsos/chaos-bot/proto/grpc/v1"
-	api "github.com/SotirisAlfonsos/chaos-bot/web/api/v1"
+	protoV1 "github.com/SotirisAlfonsos/chaos-bot/proto/grpc/v1"
+	apiV1 "github.com/SotirisAlfonsos/chaos-bot/web/api/v1"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/pkg/errors"
@@ -119,21 +118,22 @@ func (h *GRPCHandler) Run() error {
 }
 
 func (h *GRPCHandler) registerServices() {
-	v1.RegisterHealthServer(h.GRPCServer, &api.HealthCheckService{})
-	v1.RegisterServiceServer(h.GRPCServer, &api.ServiceManager{
+	protoV1.RegisterHealthServer(h.GRPCServer, &apiV1.HealthCheckService{})
+	protoV1.RegisterServiceServer(h.GRPCServer, &apiV1.ServiceManager{
 		Logger: h.Logger,
 	})
-	v1.RegisterDockerServer(h.GRPCServer, &api.DockerManager{
+	protoV1.RegisterDockerServer(h.GRPCServer, &apiV1.DockerManager{
 		Logger: h.Logger,
 	})
-	v1.RegisterCPUServer(h.GRPCServer, &api.CPUManager{
+	protoV1.RegisterCPUServer(h.GRPCServer, &apiV1.CPUManager{
 		CPU:    cpu.New(h.Logger),
 		Logger: h.Logger,
 	})
-	v1.RegisterServerServer(h.GRPCServer, &api.ServerManager{
+	protoV1.RegisterServerServer(h.GRPCServer, &apiV1.ServerManager{
 		Server: server.New(h.Logger),
 		Logger: h.Logger,
 	})
+	protoV1.RegisterNetworkServer(h.GRPCServer, apiV1.NewNetworkManager(h.Logger))
 }
 
 // Stop stops the bot GRPC server

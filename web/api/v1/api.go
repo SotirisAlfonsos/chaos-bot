@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"github.com/SotirisAlfonsos/chaos-bot/common"
-	"github.com/SotirisAlfonsos/chaos-bot/common/cpu"
 	"github.com/SotirisAlfonsos/chaos-bot/common/docker"
-	"github.com/SotirisAlfonsos/chaos-bot/common/server"
 	"github.com/SotirisAlfonsos/chaos-bot/common/service"
 	v1 "github.com/SotirisAlfonsos/chaos-bot/proto/grpc/v1"
 	"github.com/go-kit/kit/log"
@@ -49,7 +47,7 @@ func (sm *ServiceManager) Start(ctx context.Context, req *v1.ServiceRequest) (*v
 
 	resp := make(chan response, 1)
 
-	serviceManage := &service.Service{JobName: req.JobName, Name: req.Name, Logger: sm.Logger}
+	serviceManage := &service.Service{Name: req.Name, Logger: sm.Logger}
 
 	go func() {
 		resp <- startTarget(serviceManage)
@@ -72,7 +70,7 @@ func (sm *ServiceManager) Stop(ctx context.Context, req *v1.ServiceRequest) (*v1
 
 	resp := make(chan response, 1)
 
-	serviceManage := &service.Service{JobName: req.JobName, Name: req.Name, Logger: sm.Logger}
+	serviceManage := &service.Service{Name: req.Name, Logger: sm.Logger}
 
 	go func() {
 		resp <- stopTarget(serviceManage)
@@ -100,7 +98,7 @@ func (dm *DockerManager) Start(ctx context.Context, req *v1.DockerRequest) (*v1.
 	defer span.End()
 
 	resp := make(chan response, 1)
-	dockerManage := &docker.Docker{JobName: req.JobName, Name: req.Name, Logger: dm.Logger}
+	dockerManage := &docker.Docker{Name: req.Name, Logger: dm.Logger}
 
 	go func() {
 		resp <- startTarget(dockerManage)
@@ -123,7 +121,7 @@ func (dm *DockerManager) Stop(ctx context.Context, req *v1.DockerRequest) (*v1.S
 
 	resp := make(chan response, 1)
 
-	dockerManage := &docker.Docker{JobName: req.JobName, Name: req.Name, Logger: dm.Logger}
+	dockerManage := &docker.Docker{Name: req.Name, Logger: dm.Logger}
 
 	go func() {
 		resp <- stopTarget(dockerManage)
@@ -150,105 +148,6 @@ func startTarget(target common.Target) response {
 
 func stopTarget(target common.Target) response {
 	message, err := target.Stop()
-
-	return response{
-		message: message,
-		err:     err,
-	}
-}
-
-type CPUManager struct {
-	CPU    *cpu.CPU
-	Logger log.Logger
-	*v1.UnimplementedCPUServer
-}
-
-func (cm *CPUManager) Start(ctx context.Context, req *v1.CPURequest) (*v1.StatusResponse, error) {
-	ctx, span := trace.StartSpan(ctx, "v1.api.cpu.Start")
-	defer span.End()
-
-	resp := make(chan response, 1)
-
-	go func() {
-		resp <- cm.startCPU(req)
-	}()
-
-	select {
-	case <-ctx.Done():
-		<-resp
-		_ = level.Warn(cm.Logger).Log("msg", "Context error encountered", "err", ctx.Err())
-		return prepareResponse("", ctx.Err())
-	case r := <-resp:
-		return prepareResponse(r.message, r.err)
-	}
-}
-
-func (cm *CPUManager) Stop(ctx context.Context, _ *v1.CPURequest) (*v1.StatusResponse, error) {
-	ctx, span := trace.StartSpan(ctx, "v1.api.cpu.Stop")
-	defer span.End()
-
-	resp := make(chan response, 1)
-
-	go func() {
-		resp <- cm.stopCPU()
-	}()
-
-	select {
-	case <-ctx.Done():
-		<-resp
-		_ = level.Warn(cm.Logger).Log("msg", "Context error encountered", "err", ctx.Err())
-		return prepareResponse("", ctx.Err())
-	case r := <-resp:
-		return prepareResponse(r.message, r.err)
-	}
-}
-
-func (cm *CPUManager) startCPU(req *v1.CPURequest) response {
-	message, err := cm.CPU.Start(int(req.Percentage))
-
-	return response{
-		message: message,
-		err:     err,
-	}
-}
-
-func (cm *CPUManager) stopCPU() response {
-	message, err := cm.CPU.Stop()
-
-	return response{
-		message: message,
-		err:     err,
-	}
-}
-
-type ServerManager struct {
-	Server server.Server
-	Logger log.Logger
-	*v1.UnimplementedServerServer
-}
-
-func (sm *ServerManager) Stop(ctx context.Context, _ *v1.ServerRequest) (*v1.StatusResponse, error) {
-	ctx, span := trace.StartSpan(ctx, "v1.api.server.Stop")
-	defer span.End()
-
-	resp := make(chan response, 1)
-
-	go func() {
-		resp <- sm.stop()
-	}()
-
-	select {
-	case <-ctx.Done():
-		<-resp
-		_ = level.Warn(sm.Logger).Log("msg", "Context error encountered", "err", ctx.Err())
-		return prepareResponse("", ctx.Err())
-	case r := <-resp:
-		return prepareResponse(r.message, r.err)
-	}
-}
-
-func (sm *ServerManager) stop() response {
-	message, err := sm.Server.StopUnix()
 
 	return response{
 		message: message,

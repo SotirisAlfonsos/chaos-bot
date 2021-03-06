@@ -1,5 +1,5 @@
 test:
-	go test ./... -count=1 -v
+	go test ./... -count=1
 
 test-short:
 	go test ./... -count=1 -v -short
