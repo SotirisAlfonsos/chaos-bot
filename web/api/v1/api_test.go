@@ -57,14 +57,14 @@ func TestServiceManager_e2e(t *testing.T) {
 	serviceName := "simple"
 	hostname, _ := os.Hostname()
 
-	sm := &ServiceManager{Logger: logger}
+	sm := NewServiceHandler(logger)
 
 	startService(sm, serviceName, t, hostname)
-	startServiceFail(sm, serviceName, t)
+	startService(sm, serviceName, t, hostname)
 	stopService(sm, serviceName, t, hostname)
 }
 
-func startService(sm *ServiceManager, serviceName string, t *testing.T, hostname string) {
+func startService(sm *ServiceHandler, serviceName string, t *testing.T, hostname string) {
 	resp, err := sm.Start(context.TODO(), &v1.ServiceRequest{Name: serviceName})
 	if err != nil {
 		t.Fatalf("Error in Service Start request. err=%s", err)
@@ -76,17 +76,7 @@ func startService(sm *ServiceManager, serviceName string, t *testing.T, hostname
 	assert.Equal(t, expectedMessage, resp.Message)
 }
 
-func startServiceFail(sm *ServiceManager, serviceName string, t *testing.T) {
-	resp, err := sm.Start(context.TODO(), &v1.ServiceRequest{Name: serviceName})
-
-	expectedMessage := fmt.Sprintf("Could not start service %s", serviceName)
-
-	assert.Error(t, err)
-	assert.Equal(t, v1.StatusResponse_FAIL, resp.Status)
-	assert.Equal(t, expectedMessage, resp.Message)
-}
-
-func stopService(sm *ServiceManager, serviceName string, t *testing.T, hostname string) {
+func stopService(sm *ServiceHandler, serviceName string, t *testing.T, hostname string) {
 	resp, err := sm.Stop(context.TODO(), &v1.ServiceRequest{Name: serviceName})
 	if err != nil {
 		t.Fatalf("Error in Service Stop request. err=%s", err)
@@ -107,13 +97,13 @@ func TestDockerManager_e2e(t *testing.T) {
 	dockerName := "zookeeper"
 	hostname, _ := os.Hostname()
 
-	dm := &DockerManager{Logger: logger}
+	dm := &DockerHandler{Logger: logger}
 
 	startDocker(dm, dockerName, t, hostname)
 	stopDocker(dm, dockerName, t, hostname)
 }
 
-func startDocker(dm *DockerManager, dockerName string, t *testing.T, hostname string) {
+func startDocker(dm *DockerHandler, dockerName string, t *testing.T, hostname string) {
 	resp, err := dm.Start(context.TODO(), &v1.DockerRequest{Name: dockerName})
 	if err != nil {
 		t.Fatalf("Error in Docker Start request. err=%s", err)
@@ -125,7 +115,7 @@ func startDocker(dm *DockerManager, dockerName string, t *testing.T, hostname st
 	assert.Equal(t, expectedMessage, resp.Message)
 }
 
-func stopDocker(dm *DockerManager, dockerName string, t *testing.T, hostname string) {
+func stopDocker(dm *DockerHandler, dockerName string, t *testing.T, hostname string) {
 	resp, err := dm.Stop(context.TODO(), &v1.DockerRequest{Name: dockerName})
 	if err != nil {
 		t.Fatalf("Error in Docker Stop request. err=%s", err)

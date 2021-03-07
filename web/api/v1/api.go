@@ -29,34 +29,44 @@ func (hcs *HealthCheckService) Watch(*v1.HealthCheckRequest, v1.Health_WatchServ
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
 }
 
-// ServiceManager is the rpc for services management
-type ServiceManager struct {
-	Logger log.Logger
-	*v1.UnimplementedServiceServer
-}
-
 type response struct {
 	message string
 	err     error
 }
 
+// ServiceManager is the rpc for services management
+type ServiceHandler struct {
+	Logger         log.Logger
+	serviceManager *service.Service
+	*v1.UnimplementedServiceServer
+}
+
+func NewServiceHandler(logger log.Logger) *ServiceHandler {
+	manager := &service.Service{
+		Logger: logger,
+	}
+
+	return &ServiceHandler{
+		Logger:         logger,
+		serviceManager: manager,
+	}
+}
+
 // Start a service based on the name
-func (sm *ServiceManager) Start(ctx context.Context, req *v1.ServiceRequest) (*v1.StatusResponse, error) {
+func (sh *ServiceHandler) Start(ctx context.Context, req *v1.ServiceRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.service.Start")
 	defer span.End()
 
 	resp := make(chan response, 1)
 
-	serviceManage := &service.Service{Name: req.Name, Logger: sm.Logger}
-
 	go func() {
-		resp <- startTarget(serviceManage)
+		resp <- startTarget(sh.serviceManager, req.Name)
 	}()
 
 	select {
 	case <-ctx.Done():
 		<-resp
-		_ = level.Warn(sm.Logger).Log("msg", "Context error encountered", "err", ctx.Err())
+		_ = level.Warn(sh.Logger).Log("msg", "Context error encountered", "err", ctx.Err())
 		return prepareResponse("", ctx.Err())
 	case r := <-resp:
 		return prepareResponse(r.message, r.err)
@@ -64,22 +74,20 @@ func (sm *ServiceManager) Start(ctx context.Context, req *v1.ServiceRequest) (*v
 }
 
 // Stop a service based on the name
-func (sm *ServiceManager) Stop(ctx context.Context, req *v1.ServiceRequest) (*v1.StatusResponse, error) {
+func (sh *ServiceHandler) Stop(ctx context.Context, req *v1.ServiceRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.service.Stop")
 	defer span.End()
 
 	resp := make(chan response, 1)
 
-	serviceManage := &service.Service{Name: req.Name, Logger: sm.Logger}
-
 	go func() {
-		resp <- stopTarget(serviceManage)
+		resp <- stopTarget(sh.serviceManager, req.Name)
 	}()
 
 	select {
 	case <-ctx.Done():
 		<-resp
-		_ = level.Warn(sm.Logger).Log("msg", "Context error encountered", "err", ctx.Err())
+		_ = level.Warn(sh.Logger).Log("msg", "Context error encountered", "err", ctx.Err())
 		return prepareResponse("", ctx.Err())
 	case r := <-resp:
 		return prepareResponse(r.message, r.err)
@@ -87,27 +95,27 @@ func (sm *ServiceManager) Stop(ctx context.Context, req *v1.ServiceRequest) (*v1
 }
 
 // DockerManager is the rpc for docker management
-type DockerManager struct {
+type DockerHandler struct {
 	Logger log.Logger
 	*v1.UnimplementedDockerServer
 }
 
 // Start a docker container based on the name
-func (dm *DockerManager) Start(ctx context.Context, req *v1.DockerRequest) (*v1.StatusResponse, error) {
+func (dh *DockerHandler) Start(ctx context.Context, req *v1.DockerRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.docker.Start")
 	defer span.End()
 
 	resp := make(chan response, 1)
-	dockerManage := &docker.Docker{Name: req.Name, Logger: dm.Logger}
+	dockerManager := &docker.Docker{Logger: dh.Logger}
 
 	go func() {
-		resp <- startTarget(dockerManage)
+		resp <- startTarget(dockerManager, req.Name)
 	}()
 
 	select {
 	case <-ctx.Done():
 		<-resp
-		_ = level.Warn(dm.Logger).Log("msg", "Context error encountered", "err", ctx.Err())
+		_ = level.Warn(dh.Logger).Log("msg", "Context error encountered", "err", ctx.Err())
 		return prepareResponse("", ctx.Err())
 	case r := <-resp:
 		return prepareResponse(r.message, r.err)
@@ -115,30 +123,29 @@ func (dm *DockerManager) Start(ctx context.Context, req *v1.DockerRequest) (*v1.
 }
 
 // Stop a docker container based on the name
-func (dm *DockerManager) Stop(ctx context.Context, req *v1.DockerRequest) (*v1.StatusResponse, error) {
+func (dh *DockerHandler) Stop(ctx context.Context, req *v1.DockerRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.docker.Stop")
 	defer span.End()
 
 	resp := make(chan response, 1)
-
-	dockerManage := &docker.Docker{Name: req.Name, Logger: dm.Logger}
+	dockerManager := &docker.Docker{Logger: dh.Logger}
 
 	go func() {
-		resp <- stopTarget(dockerManage)
+		resp <- stopTarget(dockerManager, req.Name)
 	}()
 
 	select {
 	case <-ctx.Done():
 		<-resp
-		_ = level.Warn(dm.Logger).Log("msg", "Context error encountered", "err", ctx.Err())
+		_ = level.Warn(dh.Logger).Log("msg", "Context error encountered", "err", ctx.Err())
 		return prepareResponse("", ctx.Err())
 	case r := <-resp:
 		return prepareResponse(r.message, r.err)
 	}
 }
 
-func startTarget(target common.Target) response {
-	message, err := target.Start()
+func startTarget(target common.Target, item string) response {
+	message, err := target.Start(item)
 
 	return response{
 		message: message,
@@ -146,8 +153,8 @@ func startTarget(target common.Target) response {
 	}
 }
 
-func stopTarget(target common.Target) response {
-	message, err := target.Stop()
+func stopTarget(target common.Target, item string) response {
+	message, err := target.Stop(item)
 
 	return response{
 		message: message,

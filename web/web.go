@@ -5,7 +5,10 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/SotirisAlfonsos/chaos-bot/common/cpu"
 	"github.com/SotirisAlfonsos/chaos-bot/common/server"
@@ -110,6 +113,17 @@ func (h *GRPCHandler) Run() error {
 
 	h.registerServices()
 
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-c
+		_ = level.Info(h.Logger).Log("msg", "Gracefully shutting down GRPC server")
+
+		h.GRPCServer.Stop()
+		os.Exit(0)
+	}()
+
 	if err := h.GRPCServer.Serve(lis); err != nil {
 		return err
 	}
@@ -119,10 +133,8 @@ func (h *GRPCHandler) Run() error {
 
 func (h *GRPCHandler) registerServices() {
 	protoV1.RegisterHealthServer(h.GRPCServer, &apiV1.HealthCheckService{})
-	protoV1.RegisterServiceServer(h.GRPCServer, &apiV1.ServiceManager{
-		Logger: h.Logger,
-	})
-	protoV1.RegisterDockerServer(h.GRPCServer, &apiV1.DockerManager{
+	protoV1.RegisterServiceServer(h.GRPCServer, apiV1.NewServiceHandler(h.Logger))
+	protoV1.RegisterDockerServer(h.GRPCServer, &apiV1.DockerHandler{
 		Logger: h.Logger,
 	})
 	protoV1.RegisterCPUServer(h.GRPCServer, &apiV1.CPUManager{
