@@ -23,9 +23,8 @@ func TestHealthCheckGRPCCheckSuccess(t *testing.T) {
 	const port = "8080"
 
 	done := make(chan struct{})
-	errOnGRPCHandlerRun := make(chan error)
 
-	withTestGRPCServer(t, port, done, errOnGRPCHandlerRun)
+	withTestGRPCServer(t, port, done)
 
 	clientConn, err := withTestGRPCClientConn(port)
 	if err != nil {
@@ -44,35 +43,7 @@ func TestHealthCheckGRPCCheckSuccess(t *testing.T) {
 
 	assert.NotNil(t, resp)
 	assert.Nil(t, err)
-	assert.Nil(t, <-errOnGRPCHandlerRun)
 	assert.Equal(t, v1.HealthCheckResponse_SERVING, resp.Status)
-}
-
-func TestHealthCheckGRPCCheckInvalidPort(t *testing.T) {
-	const port = "-1"
-
-	done := make(chan struct{})
-	errOnGRPCHandlerRun := make(chan error)
-
-	withTestGRPCServer(t, port, done, errOnGRPCHandlerRun)
-
-	clientConn, err := withTestGRPCClientConn(port)
-	if err != nil {
-		t.Fatalf("Can not create client connection")
-	}
-
-	client := v1.NewHealthClient(clientConn)
-	resp := performHChReqOnCheck(client)
-
-	done <- struct{}{}
-
-	err = clientConn.Close()
-	if err != nil {
-		t.Fatalf("Can not close client connection")
-	}
-
-	assert.Nil(t, resp)
-	assert.EqualError(t, <-errOnGRPCHandlerRun, fmt.Sprintf("listen tcp: address %s: invalid port", port))
 }
 
 // === End to end testing ===
@@ -84,9 +55,8 @@ func TestStartServiceGRPCSuccess(t *testing.T) {
 	const port = "8080"
 
 	done := make(chan struct{})
-	errOnGRPCHandlerRun := make(chan error)
 
-	withTestGRPCServer(t, port, done, errOnGRPCHandlerRun)
+	withTestGRPCServer(t, port, done)
 
 	clientConn, err := withTestGRPCClientConn(port)
 	if err != nil {
@@ -104,7 +74,6 @@ func TestStartServiceGRPCSuccess(t *testing.T) {
 	}
 
 	assert.Nil(t, err)
-	assert.Nil(t, <-errOnGRPCHandlerRun)
 	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Status)
 	assert.NotNil(t, resp.Message)
 }
@@ -118,9 +87,8 @@ func TestStopServiceGRPCSuccess(t *testing.T) {
 	const port = "8080"
 
 	done := make(chan struct{})
-	errOnGRPCHandlerRun := make(chan error)
 
-	withTestGRPCServer(t, port, done, errOnGRPCHandlerRun)
+	withTestGRPCServer(t, port, done)
 
 	clientConn, err := withTestGRPCClientConn(port)
 	if err != nil {
@@ -138,24 +106,19 @@ func TestStopServiceGRPCSuccess(t *testing.T) {
 	}
 
 	assert.Nil(t, err)
-	assert.Nil(t, <-errOnGRPCHandlerRun)
 	assert.Equal(t, v1.StatusResponse_SUCCESS, resp.Status)
 	assert.NotNil(t, resp.Message)
 }
 
-func withTestGRPCServer(t *testing.T, port string, done chan struct{}, errOnGRPCHandlerRun chan error) {
+func withTestGRPCServer(t *testing.T, port string, done chan struct{}) {
 	GRPCHandler, err := NewGRPCHandler(port, logger, &config.Config{})
 	if err != nil {
 		t.Fatalf("Could not create grpc handler")
 	}
 
-	go func(errOnGRPCHandlerRun chan error) {
-		if err := GRPCHandler.Run(); err != nil {
-			errOnGRPCHandlerRun <- err
-		} else {
-			errOnGRPCHandlerRun <- nil
-		}
-	}(errOnGRPCHandlerRun)
+	go func() {
+		GRPCHandler.Run()
+	}()
 	time.Sleep(2 * time.Second)
 
 	go func(done chan struct{}) {

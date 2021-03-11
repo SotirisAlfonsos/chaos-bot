@@ -103,32 +103,36 @@ func valid(authorization []string, peerToken string) bool {
 }
 
 // Run starts the bot GRPC server
-func (h *GRPCHandler) Run() error {
+func (h *GRPCHandler) Run() {
 	_ = level.Info(h.Logger).Log("msg", "starting web server on port "+h.Port)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", h.Port))
 	if err != nil {
-		return err
+		_ = level.Error(h.Logger).Log("msg", "could not listen on port "+h.Port, "err", err)
+		os.Exit(1)
 	}
 
 	h.registerServices()
 
 	c := make(chan os.Signal, 1)
+	e := make(chan error)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		<-c
-		_ = level.Info(h.Logger).Log("msg", "Gracefully shutting down GRPC server")
-
-		h.GRPCServer.Stop()
-		os.Exit(0)
+		if err := h.GRPCServer.Serve(lis); err != nil {
+			e <- err
+		}
 	}()
 
-	if err := h.GRPCServer.Serve(lis); err != nil {
-		return err
+	select {
+	case err := <-e:
+		_ = level.Error(h.Logger).Log("msg", "server error", "err", err)
+		os.Exit(1)
+	case <-c:
+		_ = level.Info(h.Logger).Log("msg", "Gracefully shutting down GRPC server")
+		h.GRPCServer.Stop()
+		os.Exit(0)
 	}
-
-	return nil
 }
 
 func (h *GRPCHandler) registerServices() {

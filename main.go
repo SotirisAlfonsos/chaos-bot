@@ -44,9 +44,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := grpcHandler.Run(); err != nil {
-		_ = level.Error(logger).Log("msg", "Failed to start Grpc server on port "+*port, "err", err)
-	}
+	grpcHandler.Run()
 }
 
 func createLogger(debugLevel string) log.Logger {
