@@ -16,14 +16,14 @@ type ServerManager struct {
 	*v1.UnimplementedServerServer
 }
 
-func (sm *ServerManager) Stop(ctx context.Context, _ *v1.ServerRequest) (*v1.StatusResponse, error) {
-	ctx, span := trace.StartSpan(ctx, "v1.api.server.Stop")
+func (sm *ServerManager) Kill(ctx context.Context, _ *v1.ServerRequest) (*v1.StatusResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "v1.api.server.Kill")
 	defer span.End()
 
 	resp := make(chan response, 1)
 
 	go func() {
-		resp <- sm.stop()
+		resp <- sm.kill()
 	}()
 
 	select {
@@ -36,7 +36,7 @@ func (sm *ServerManager) Stop(ctx context.Context, _ *v1.ServerRequest) (*v1.Sta
 	}
 }
 
-func (sm *ServerManager) stop() response {
+func (sm *ServerManager) kill() response {
 	message, err := sm.Server.StopUnix()
 
 	return response{

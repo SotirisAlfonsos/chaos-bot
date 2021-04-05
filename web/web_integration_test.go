@@ -1,3 +1,5 @@
+// +build integration
+
 package web
 
 import (
@@ -47,11 +49,7 @@ func TestHealthCheckGRPCCheckSuccess(t *testing.T) {
 }
 
 // === End to end testing ===
-func TestStartServiceGRPCSuccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
+func TestRecoverServiceGRPCSuccess(t *testing.T) {
 	const port = "8080"
 
 	done := make(chan struct{})
@@ -64,7 +62,7 @@ func TestStartServiceGRPCSuccess(t *testing.T) {
 	}
 
 	client := v1.NewServiceClient(clientConn)
-	resp := performStartServiceReq(client)
+	resp := performRecoverServiceReq(client)
 
 	done <- struct{}{}
 
@@ -79,12 +77,8 @@ func TestStartServiceGRPCSuccess(t *testing.T) {
 }
 
 // === End to end testing ===
-func TestStopServiceGRPCSuccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
-	const port = "8080"
+func TestKillServiceGRPCSuccess(t *testing.T) {
+	const port = "8081"
 
 	done := make(chan struct{})
 
@@ -96,7 +90,7 @@ func TestStopServiceGRPCSuccess(t *testing.T) {
 	}
 
 	client := v1.NewServiceClient(clientConn)
-	resp := performStopServiceReq(client)
+	resp := performKillServiceReq(client)
 
 	done <- struct{}{}
 
@@ -148,8 +142,8 @@ func performHChReqOnCheck(client v1.HealthClient) *v1.HealthCheckResponse {
 	return resp
 }
 
-func performStartServiceReq(client v1.ServiceClient) *v1.StatusResponse {
-	resp, err := client.Start(context.Background(), &v1.ServiceRequest{Name: "simple"})
+func performRecoverServiceReq(client v1.ServiceClient) *v1.StatusResponse {
+	resp, err := client.Recover(context.Background(), &v1.ServiceRequest{Name: "simple"})
 	if err != nil {
 		_ = level.Error(logger).Log("msg", "Failed to call the Start method on the Service", "err", err)
 		return resp
@@ -158,8 +152,8 @@ func performStartServiceReq(client v1.ServiceClient) *v1.StatusResponse {
 	return resp
 }
 
-func performStopServiceReq(client v1.ServiceClient) *v1.StatusResponse {
-	resp, err := client.Stop(context.Background(), &v1.ServiceRequest{Name: "simple"})
+func performKillServiceReq(client v1.ServiceClient) *v1.StatusResponse {
+	resp, err := client.Kill(context.Background(), &v1.ServiceRequest{Name: "simple"})
 	if err != nil {
 		_ = level.Error(logger).Log("msg", "Failed to call the Start method on the Service", "err", err)
 		return resp

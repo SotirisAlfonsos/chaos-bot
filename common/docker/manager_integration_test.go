@@ -1,3 +1,5 @@
+// +build integration
+
 package docker
 
 import (
@@ -31,17 +33,13 @@ type expected struct {
 	status  codes.Code
 }
 
-func Test_Docker_Success_Start(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
+func Test_Docker_Success_Recover(t *testing.T) {
 	dataItems := []dataItem{
 		{
-			message:       "Should start docker with existing name",
+			message:       "Should recover docker with existing name",
 			dockerRequest: &v1.DockerRequest{Name: containerName},
 			expectedResult: &expected{
-				message: fmt.Sprintf("Bot %s %s docker container %s", getHostname(t), "started", containerName),
+				message: fmt.Sprintf("Bot %s %s docker container %s", getHostname(t), "recovered", containerName),
 				status:  codes.OK,
 			},
 		},
@@ -51,7 +49,7 @@ func Test_Docker_Success_Start(t *testing.T) {
 		t.Run(dataItem.message, func(t *testing.T) {
 			dockerManage := &Docker{Logger: logger}
 
-			resp, err := dockerManage.Start(dataItem.dockerRequest.Name)
+			resp, err := dockerManage.Recover(dataItem.dockerRequest.Name)
 			defer cleanUp(t, dockerManage, dataItem.dockerRequest.Name)
 
 			assert.Nil(t, err)
@@ -60,64 +58,52 @@ func Test_Docker_Success_Start(t *testing.T) {
 	}
 }
 
-func Test_Docker_Failure_Start(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
+func Test_Docker_Failure_Recover(t *testing.T) {
 	dataItems := []dataItem{
 		{
-			message:       "Should fail to start docker with non existing name",
+			message:       "Should fail to recover docker with non existing name",
 			dockerRequest: &v1.DockerRequest{Name: "non existing container name"},
 			expectedResult: &expected{
-				message: "Could not start docker container {non existing container name}",
+				message: "Could not recover docker container {non existing container name}",
 				status:  codes.Internal,
 			},
 		},
 		{
-			message:       "Should fail to start docker that has already started",
+			message:       "Should fail to recover docker that has already recovered",
 			dockerRequest: &v1.DockerRequest{},
 			expectedResult: &expected{
-				message: "Could not start docker container {}",
+				message: "Could not recover docker container {}",
 				status:  codes.Internal,
 			},
 		},
 	}
 
 	for _, dataItem := range dataItems {
-		runTest(t, dataItem, "start")
+		runTest(t, dataItem, "recover")
 	}
 }
 
-func TestShouldSucceedWhenStartingDockerThatIsAlreadyStarted(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
+func TestShouldSucceedWhenRecoveringDockerThatIsAlreadyRecovered(t *testing.T) {
 	dockerManage := &Docker{Logger: logger}
 
-	_, err := dockerManage.Start(containerName)
+	_, err := dockerManage.Recover(containerName)
 	if err != nil {
-		t.Fatalf("should be able to start container %s. Got err=%s", containerName, err.Error())
+		t.Fatalf("should be able to recover container %s. Got err=%s", containerName, err.Error())
 	}
-	resp, err := dockerManage.Start(containerName)
+	resp, err := dockerManage.Recover(containerName)
 	defer cleanUp(t, dockerManage, containerName)
 
 	assert.Nil(t, err)
-	assert.Equal(t, fmt.Sprintf("Bot %s started docker container %s", getHostname(t), containerName), resp)
+	assert.Equal(t, fmt.Sprintf("Bot %s recovered docker container %s", getHostname(t), containerName), resp)
 }
 
-func Test_Docker_Success_Stop(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
+func Test_Docker_Success_Kill(t *testing.T) {
 	dataItems := []dataItem{
 		{
-			message:       "Should stop docker with existing name",
+			message:       "Should kill docker with existing name",
 			dockerRequest: &v1.DockerRequest{Name: containerName},
 			expectedResult: &expected{
-				message: fmt.Sprintf("Bot %s %s docker container %s", getHostname(t), "stopped", containerName),
+				message: fmt.Sprintf("Bot %s %s docker container %s", getHostname(t), "killed", containerName),
 				status:  codes.OK,
 			},
 		},
@@ -129,7 +115,7 @@ func Test_Docker_Success_Stop(t *testing.T) {
 
 			setUp(t, dockerManage, dataItem.dockerRequest.Name)
 
-			resp, err := dockerManage.Stop(dataItem.dockerRequest.Name)
+			resp, err := dockerManage.Kill(dataItem.dockerRequest.Name)
 
 			assert.Nil(t, err)
 			assert.Equal(t, dataItem.expectedResult.message, resp)
@@ -137,32 +123,28 @@ func Test_Docker_Success_Stop(t *testing.T) {
 	}
 }
 
-func Test_Docker_Failure_Stop(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
+func Test_Docker_Failure_Kill(t *testing.T) {
 	dataItems := []dataItem{
 		{
-			message:       "Should fail to stop docker with non existing  name",
+			message:       "Should fail to kill docker with non existing  name",
 			dockerRequest: &v1.DockerRequest{Name: "non existing container name"},
 			expectedResult: &expected{
-				message: "Could not stop docker container {non existing container name}",
+				message: "Could not kill docker container {non existing container name}",
 				status:  codes.Internal,
 			},
 		},
 		{
-			message:       "Should fail to stop docker that has already started",
+			message:       "Should fail to kill docker that has already recovered",
 			dockerRequest: &v1.DockerRequest{},
 			expectedResult: &expected{
-				message: "Could not stop docker container {}",
+				message: "Could not kill docker container {}",
 				status:  codes.Internal,
 			},
 		},
 	}
 
 	for _, dataItem := range dataItems {
-		runTest(t, dataItem, "stop")
+		runTest(t, dataItem, "kill")
 	}
 }
 
@@ -174,10 +156,10 @@ func runTest(t *testing.T, dataItem dataItem, action string) {
 		var err error
 
 		switch {
-		case action == "start":
-			resp, err = dockerManage.Start(dataItem.dockerRequest.Name)
-		case action == "stop":
-			resp, err = dockerManage.Stop(dataItem.dockerRequest.Name)
+		case action == "recover":
+			resp, err = dockerManage.Recover(dataItem.dockerRequest.Name)
+		case action == "kill":
+			resp, err = dockerManage.Kill(dataItem.dockerRequest.Name)
 		default:
 			t.Fatal("no valid action")
 		}
@@ -193,21 +175,21 @@ func runTest(t *testing.T, dataItem dataItem, action string) {
 }
 
 func setUp(t *testing.T, d *Docker, container string) {
-	_, err := d.Start(container)
+	_, err := d.Recover(container)
 	if err != nil {
-		t.Fatalf("Could not start docker %s", container)
+		t.Fatalf("Could not recover docker %s", container)
 	}
 
-	_ = level.Info(logger).Log("msg", "setup operation. Start docker")
+	_ = level.Info(logger).Log("msg", "setup operation. Recover docker")
 }
 
 func cleanUp(t *testing.T, d *Docker, container string) {
-	_, err := d.Stop(container)
+	_, err := d.Kill(container)
 	if err != nil {
-		t.Fatalf("Could not stop docker %s", container)
+		t.Fatalf("Could not kill docker %s", container)
 	}
 
-	_ = level.Info(logger).Log("msg", "cleanup operation. Stop docker")
+	_ = level.Info(logger).Log("msg", "cleanup operation. Kill docker")
 }
 
 func getHostname(t *testing.T) string {

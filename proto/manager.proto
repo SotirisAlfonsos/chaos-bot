@@ -5,27 +5,27 @@ option go_package = "grpc/v1";
 package v1;
 
 service Service {
-    rpc Start(ServiceRequest) returns (StatusResponse) {};
-    rpc Stop(ServiceRequest) returns (StatusResponse) {};
+    rpc Kill(ServiceRequest) returns (StatusResponse) {};
+    rpc Recover(ServiceRequest) returns (StatusResponse) {};
 }
 
 service Docker {
-    rpc Start(DockerRequest) returns (StatusResponse) {};
-    rpc Stop(DockerRequest) returns (StatusResponse) {};
+    rpc Kill(DockerRequest) returns (StatusResponse) {};
+    rpc Recover(DockerRequest) returns (StatusResponse) {};
 }
 
 service CPU {
     rpc Start(CPURequest) returns (StatusResponse) {};
-    rpc Stop(CPURequest) returns (StatusResponse) {};
+    rpc Recover(CPURequest) returns (StatusResponse) {};
 }
 
 service Server {
-    rpc Stop(ServerRequest) returns (StatusResponse) {};
+    rpc Kill(ServerRequest) returns (StatusResponse) {};
 }
 
 service Network {
     rpc Start(NetworkRequest) returns (StatusResponse) {};
-    rpc Stop(NetworkRequest) returns (StatusResponse) {};
+    rpc Recover(NetworkRequest) returns (StatusResponse) {};
 }
 
 message ServiceRequest {

@@ -37,7 +37,7 @@ func (n *Network) Start(netemAttrs *v1.NetworkRequest) (string, error) {
 	return constructStartMessage(n.Logger, qdiscNetem), nil
 }
 
-func (n *Network) Stop(device string) (string, error) {
+func (n *Network) Recover(device string) (string, error) {
 	link, err := netlink.LinkByName(device)
 	if err != nil {
 		return fmt.Sprintf("Could not get link %s", device), err
@@ -49,7 +49,7 @@ func (n *Network) Stop(device string) (string, error) {
 		return fmt.Sprintf("Could not delete qdisc %s", device), err
 	}
 
-	return constructMessage(n.Logger, "stopped"), nil
+	return constructMessage(n.Logger, "recovered"), nil
 }
 
 func constructStartMessage(logger log.Logger, qdiscNetem fmt.Stringer) string {

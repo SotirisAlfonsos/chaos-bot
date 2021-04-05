@@ -17,8 +17,8 @@ type Service struct {
 	Logger log.Logger
 }
 
-// Start will perform a service start on the service specified
-func (s *Service) Start(serviceName string) (string, error) {
+// Recover will perform a service start on the service specified
+func (s *Service) Recover(serviceName string) (string, error) {
 	dmn, err := daemon.New(serviceName, "", daemon.SystemDaemon)
 	if err != nil {
 		_ = level.Error(s.Logger).Log("msg", "Could not instantiate daemon", "err", err)
@@ -27,17 +27,17 @@ func (s *Service) Start(serviceName string) (string, error) {
 
 	_, err = dmn.Start()
 	if err != nil && daemon.ErrAlreadyRunning != err {
-		_ = level.Error(s.Logger).Log("msg", fmt.Sprintf("Could not start service {%s}", serviceName), "err", err)
-		return fmt.Sprintf("Could not start service {%s}", serviceName), status.Error(codes.Internal, err.Error())
+		_ = level.Error(s.Logger).Log("msg", fmt.Sprintf("Could not recover service {%s}", serviceName), "err", err)
+		return fmt.Sprintf("Could not recover service {%s}", serviceName), status.Error(codes.Internal, err.Error())
 	}
 
-	_ = level.Info(s.Logger).Log("msg", fmt.Sprintf("Started service with name %s", serviceName))
+	_ = level.Info(s.Logger).Log("msg", fmt.Sprintf("Recovered service with name %s", serviceName))
 
-	return constructMessage(s.Logger, "started", serviceName), nil
+	return constructMessage(s.Logger, "recovered", serviceName), nil
 }
 
-// Stop will perform a service stop on the service specified
-func (s *Service) Stop(serviceName string) (string, error) {
+// Kill will perform a service stop on the service specified
+func (s *Service) Kill(serviceName string) (string, error) {
 	dmn, err := daemon.New(serviceName, "", daemon.SystemDaemon)
 	if err != nil {
 		_ = level.Error(s.Logger).Log("msg", "Could not instantiate daemon", "err", err)
@@ -46,13 +46,13 @@ func (s *Service) Stop(serviceName string) (string, error) {
 
 	_, err = dmn.Stop()
 	if err != nil && daemon.ErrAlreadyStopped != err {
-		_ = level.Error(s.Logger).Log("msg", fmt.Sprintf("Could not stop service {%s}", serviceName), "err", err)
-		return fmt.Sprintf("Could not stop service {%s}", serviceName), status.Error(codes.Internal, err.Error())
+		_ = level.Error(s.Logger).Log("msg", fmt.Sprintf("Could not kill service {%s}", serviceName), "err", err)
+		return fmt.Sprintf("Could not kill service {%s}", serviceName), status.Error(codes.Internal, err.Error())
 	}
 
-	_ = level.Info(s.Logger).Log("msg", fmt.Sprintf("Stopped service with name %s", serviceName))
+	_ = level.Info(s.Logger).Log("msg", fmt.Sprintf("Killed service with name %s", serviceName))
 
-	return constructMessage(s.Logger, "stopped", serviceName), nil
+	return constructMessage(s.Logger, "killed", serviceName), nil
 }
 
 func constructMessage(logger log.Logger, action string, name string) string {

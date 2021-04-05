@@ -53,14 +53,14 @@ func NewServiceHandler(logger log.Logger) *ServiceHandler {
 }
 
 // Start a service based on the name
-func (sh *ServiceHandler) Start(ctx context.Context, req *v1.ServiceRequest) (*v1.StatusResponse, error) {
+func (sh *ServiceHandler) Recover(ctx context.Context, req *v1.ServiceRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.service.Start")
 	defer span.End()
 
 	resp := make(chan response, 1)
 
 	go func() {
-		resp <- startTarget(sh.serviceManager, req.Name)
+		resp <- recoverTarget(sh.serviceManager, req.Name)
 	}()
 
 	select {
@@ -74,14 +74,14 @@ func (sh *ServiceHandler) Start(ctx context.Context, req *v1.ServiceRequest) (*v
 }
 
 // Stop a service based on the name
-func (sh *ServiceHandler) Stop(ctx context.Context, req *v1.ServiceRequest) (*v1.StatusResponse, error) {
+func (sh *ServiceHandler) Kill(ctx context.Context, req *v1.ServiceRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.service.Stop")
 	defer span.End()
 
 	resp := make(chan response, 1)
 
 	go func() {
-		resp <- stopTarget(sh.serviceManager, req.Name)
+		resp <- killTarget(sh.serviceManager, req.Name)
 	}()
 
 	select {
@@ -101,7 +101,7 @@ type DockerHandler struct {
 }
 
 // Start a docker container based on the name
-func (dh *DockerHandler) Start(ctx context.Context, req *v1.DockerRequest) (*v1.StatusResponse, error) {
+func (dh *DockerHandler) Recover(ctx context.Context, req *v1.DockerRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.docker.Start")
 	defer span.End()
 
@@ -109,7 +109,7 @@ func (dh *DockerHandler) Start(ctx context.Context, req *v1.DockerRequest) (*v1.
 	dockerManager := &docker.Docker{Logger: dh.Logger}
 
 	go func() {
-		resp <- startTarget(dockerManager, req.Name)
+		resp <- recoverTarget(dockerManager, req.Name)
 	}()
 
 	select {
@@ -123,7 +123,7 @@ func (dh *DockerHandler) Start(ctx context.Context, req *v1.DockerRequest) (*v1.
 }
 
 // Stop a docker container based on the name
-func (dh *DockerHandler) Stop(ctx context.Context, req *v1.DockerRequest) (*v1.StatusResponse, error) {
+func (dh *DockerHandler) Kill(ctx context.Context, req *v1.DockerRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.docker.Stop")
 	defer span.End()
 
@@ -131,7 +131,7 @@ func (dh *DockerHandler) Stop(ctx context.Context, req *v1.DockerRequest) (*v1.S
 	dockerManager := &docker.Docker{Logger: dh.Logger}
 
 	go func() {
-		resp <- stopTarget(dockerManager, req.Name)
+		resp <- killTarget(dockerManager, req.Name)
 	}()
 
 	select {
@@ -144,8 +144,8 @@ func (dh *DockerHandler) Stop(ctx context.Context, req *v1.DockerRequest) (*v1.S
 	}
 }
 
-func startTarget(target common.Target, item string) response {
-	message, err := target.Start(item)
+func recoverTarget(target common.Target, item string) response {
+	message, err := target.Recover(item)
 
 	return response{
 		message: message,
@@ -153,8 +153,8 @@ func startTarget(target common.Target, item string) response {
 	}
 }
 
-func stopTarget(target common.Target, item string) response {
-	message, err := target.Stop(item)
+func killTarget(target common.Target, item string) response {
+	message, err := target.Kill(item)
 
 	return response{
 		message: message,

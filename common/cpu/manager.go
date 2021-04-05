@@ -16,19 +16,19 @@ import (
 type CPU struct {
 	mu     sync.Mutex
 	status status
-	stop   chan int
+	done   chan int
 	logger log.Logger
 }
 
 type status int
 
 const (
-	stopped status = iota
+	recovered status = iota
 	started
 )
 
 // New will create a new CPU instance with the amount of threads to perform
-// the injection and the channel that will be used to stop it
+// the injection and the channel that will be used to recover it
 func New(logger log.Logger) *CPU {
 	return &CPU{
 		logger: logger,
@@ -41,10 +41,10 @@ func (cpu *CPU) Start(percentage int) (string, error) {
 	defer cpu.mu.Unlock()
 
 	if cpu.status == started {
-		return "Could not inject cpu failure", errors.New("CPU injection already running. Stop it before starting another")
+		return "Could not inject cpu failure", errors.New("CPU injection already running. Recover before starting another")
 	}
 
-	cpu.stop = make(chan int)
+	cpu.done = make(chan int)
 
 	if err := cpu.injection(percentage); err != nil {
 		return "Could not inject cpu failure", err
@@ -55,18 +55,18 @@ func (cpu *CPU) Start(percentage int) (string, error) {
 }
 
 // Start will recover cpu failure by closing all channels
-func (cpu *CPU) Stop() (string, error) {
+func (cpu *CPU) Recover() (string, error) {
 	cpu.mu.Lock()
 	defer cpu.mu.Unlock()
 
 	if cpu.status != started {
-		return "Could not stop cpu failure", errors.New("CPU injection is not running. Start it before trying to stop")
+		return "Could not recover cpu failure", errors.New("CPU injection is not running. Start it before trying to recover")
 	}
 
-	close(cpu.stop)
-	cpu.status = stopped
+	close(cpu.done)
+	cpu.status = recovered
 
-	return constructMessage(cpu.logger, "stopped"), nil
+	return constructMessage(cpu.logger, "recovered"), nil
 }
 
 func (cpu *CPU) injection(percent int) error {
@@ -82,7 +82,7 @@ func (cpu *CPU) injection(percent int) error {
 			ticker := time.NewTicker(1 * time.Second)
 			for {
 				select {
-				case <-cpu.stop:
+				case <-cpu.done:
 					return
 				case <-ticker.C:
 					time.Sleep(sleepBaseOnPercentage * time.Millisecond)

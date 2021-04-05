@@ -36,14 +36,14 @@ func (cm *CPUManager) Start(ctx context.Context, req *v1.CPURequest) (*v1.Status
 	}
 }
 
-func (cm *CPUManager) Stop(ctx context.Context, _ *v1.CPURequest) (*v1.StatusResponse, error) {
+func (cm *CPUManager) Recover(ctx context.Context, _ *v1.CPURequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.cpu.Stop")
 	defer span.End()
 
 	resp := make(chan response, 1)
 
 	go func() {
-		resp <- cm.stopCPU()
+		resp <- cm.recoverCPU()
 	}()
 
 	select {
@@ -65,8 +65,8 @@ func (cm *CPUManager) startCPU(req *v1.CPURequest) response {
 	}
 }
 
-func (cm *CPUManager) stopCPU() response {
-	message, err := cm.CPU.Stop()
+func (cm *CPUManager) recoverCPU() response {
+	message, err := cm.CPU.Recover()
 
 	return response{
 		message: message,

@@ -43,14 +43,14 @@ func (nm *NetworkManager) Start(ctx context.Context, req *v1.NetworkRequest) (*v
 	}
 }
 
-func (nm *NetworkManager) Stop(ctx context.Context, req *v1.NetworkRequest) (*v1.StatusResponse, error) {
+func (nm *NetworkManager) Recover(ctx context.Context, req *v1.NetworkRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.network.Stop")
 	defer span.End()
 
 	resp := make(chan response, 1)
 
 	go func() {
-		resp <- nm.stopNetwork(req.Device)
+		resp <- nm.recoverNetwork(req.Device)
 	}()
 
 	select {
@@ -72,8 +72,8 @@ func (nm *NetworkManager) startNetwork(req *v1.NetworkRequest) response {
 	}
 }
 
-func (nm *NetworkManager) stopNetwork(device string) response {
-	message, err := nm.Network.Stop(device)
+func (nm *NetworkManager) recoverNetwork(device string) response {
+	message, err := nm.Network.Recover(device)
 
 	return response{
 		message: message,

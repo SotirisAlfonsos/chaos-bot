@@ -20,8 +20,8 @@ type Docker struct {
 	client *client.Client
 }
 
-// Start will perform a docker start on the container specified
-func (d *Docker) Start(container string) (string, error) {
+// Recover will perform a docker start on the container specified
+func (d *Docker) Recover(container string) (string, error) {
 	err := d.initClient()
 	if err != nil {
 		return "Could not instantiate docker client", err
@@ -29,19 +29,19 @@ func (d *Docker) Start(container string) (string, error) {
 
 	containerID := getContainerID(d.client, container, d.Logger)
 
-	errStart := d.client.ContainerStart(context.Background(), containerID, types.ContainerStartOptions{})
-	if errStart != nil {
-		_ = level.Error(d.Logger).Log("msg", fmt.Sprintf("Could not start docker container {%s}", containerID), "err", errStart)
-		return fmt.Sprintf("Could not start docker container {%s}", containerID), status.Error(codes.Internal, errStart.Error())
+	errRecover := d.client.ContainerStart(context.Background(), containerID, types.ContainerStartOptions{})
+	if errRecover != nil {
+		_ = level.Error(d.Logger).Log("msg", fmt.Sprintf("Could not recover docker container {%s}", containerID), "err", errRecover)
+		return fmt.Sprintf("Could not recover docker container {%s}", containerID), status.Error(codes.Internal, errRecover.Error())
 	}
 
-	_ = level.Info(d.Logger).Log("msg", fmt.Sprintf("Started container with id {%s}", containerID))
+	_ = level.Info(d.Logger).Log("msg", fmt.Sprintf("Recovered container with id {%s}", containerID))
 
-	return constructMessage(d.Logger, "started", containerID), nil
+	return constructMessage(d.Logger, "recovered", containerID), nil
 }
 
-// Stop will perform a docker stop on the container specified
-func (d *Docker) Stop(container string) (string, error) {
+// Kill will perform a docker stop on the container specified
+func (d *Docker) Kill(container string) (string, error) {
 	err := d.initClient()
 	if err != nil {
 		return "Could not instantiate docker client", err
@@ -49,15 +49,15 @@ func (d *Docker) Stop(container string) (string, error) {
 
 	containerID := getContainerID(d.client, container, d.Logger)
 
-	errStop := d.client.ContainerStop(context.Background(), containerID, nil)
-	if errStop != nil {
-		_ = level.Error(d.Logger).Log("msg", fmt.Sprintf("Could not stop docker container {%s}", containerID), "err", errStop)
-		return fmt.Sprintf("Could not stop docker container {%s}", containerID), status.Error(codes.Internal, errStop.Error())
+	errKill := d.client.ContainerStop(context.Background(), containerID, nil)
+	if errKill != nil {
+		_ = level.Error(d.Logger).Log("msg", fmt.Sprintf("Could not kill docker container {%s}", containerID), "err", errKill)
+		return fmt.Sprintf("Could not kill docker container {%s}", containerID), status.Error(codes.Internal, errKill.Error())
 	}
 
-	_ = level.Info(d.Logger).Log("msg", fmt.Sprintf("Stopped container with id %s", containerID))
+	_ = level.Info(d.Logger).Log("msg", fmt.Sprintf("Killed container with id %s", containerID))
 
-	return constructMessage(d.Logger, "stopped", containerID), nil
+	return constructMessage(d.Logger, "killed", containerID), nil
 }
 
 func (d *Docker) initClient() error {

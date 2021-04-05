@@ -1,3 +1,5 @@
+// +build integration
+
 package cpu
 
 import (
@@ -28,8 +30,8 @@ func TestCPU_Start_and_Stop(t *testing.T) {
 			message:    "Start and stop cpu experiment for single thread",
 			percentage: 50,
 			expected: map[string]string{
-				"start": fmt.Sprintf("Bot %s started cpu injection at %d%%", getHostname(t), 50),
-				"stop":  fmt.Sprintf("Bot %s stopped cpu injection", getHostname(t)),
+				"start":   fmt.Sprintf("Bot %s started cpu injection at %d%%", getHostname(t), 50),
+				"recover": fmt.Sprintf("Bot %s recovered cpu injection", getHostname(t)),
 			},
 		},
 	}
@@ -50,7 +52,7 @@ func TestCPU_Start_and_Stop(t *testing.T) {
 
 		goroutinesAfterInjection := runtime.NumGoroutine()
 		assert.Equal(t, goroutinesAfterInjection, goroutinesDuringInjection-runtime.NumCPU())
-		assert.Equal(t, dataItem.expected["stop"], stopResponse)
+		assert.Equal(t, dataItem.expected["recover"], stopResponse)
 	}
 }
 
@@ -64,9 +66,9 @@ func startExperiment(t *testing.T, percentage int, cpu *CPU) string {
 }
 
 func stopExperiment(t *testing.T, cpu *CPU) string {
-	stopResponse, stopErr := cpu.Stop()
+	stopResponse, stopErr := cpu.Recover()
 	if stopErr != nil {
-		t.Fatalf("Failed to stop cpu injection")
+		t.Fatalf("Failed to recover cpu injection")
 	}
 	time.Sleep(1 * time.Second)
 	return stopResponse
@@ -80,7 +82,7 @@ func TestCPU_Start_with_status_already_started(t *testing.T) {
 
 	assert.Equal(t, "Could not inject cpu failure", message)
 	assert.NotNil(t, err)
-	assert.Equal(t, "CPU injection already running. Stop it before starting another", err.Error())
+	assert.Equal(t, "CPU injection already running. Recover before starting another", err.Error())
 	assert.Equal(t, started, cpu.status)
 }
 

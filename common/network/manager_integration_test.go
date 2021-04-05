@@ -1,3 +1,5 @@
+// +build integration
+
 package network
 
 import (
@@ -33,10 +35,6 @@ type expected struct {
 }
 
 func Test_Network_Delay_Injection_Success_Start(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
 	dataItems := []dataItem{
 		{
 			message:    "Start network delay with latency and duplication details",
@@ -96,10 +94,6 @@ func Test_Network_Delay_Injection_Error_Non_Existing_Link_Start(t *testing.T) {
 }
 
 func Test_Network_Delay_Injection_Error_Can_Not_Add_Two_Netem_For_A_Device(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
 	netemAttrs := &v1.NetworkRequest{
 		Device:  "lo",
 		Latency: 10,
@@ -116,27 +110,23 @@ func Test_Network_Delay_Injection_Error_Can_Not_Add_Two_Netem_For_A_Device(t *te
 	assert.Regexp(t, fmt.Sprintf("Could not add new qdisc %s", netemAttrs.Device), resp2)
 }
 
-func Test_Network_Delay_Injection_Success_Stop(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
+func Test_Network_Delay_Injection_Success_Recover(t *testing.T) {
 	dataItems := []dataItem{
 		{
-			message:    "Stop network delay with latency and duplication details",
+			message:    "Recover network delay with latency and duplication details",
 			netemAttrs: &v1.NetworkRequest{Device: "lo", Latency: 10},
 			expectedResult: &expected{
-				message: "Bot " + getHostname(t) + " stopped network injection",
+				message: "Bot " + getHostname(t) + " recovered network injection",
 			},
 		},
 	}
 
 	for _, dataItem := range dataItems {
-		runStopTest(t, dataItem)
+		runRecoverTest(t, dataItem)
 	}
 }
 
-func runStopTest(t *testing.T, dataItem dataItem) {
+func runRecoverTest(t *testing.T, dataItem dataItem) {
 	t.Run(dataItem.message, func(t *testing.T) {
 		network := New(logger)
 
@@ -144,37 +134,33 @@ func runStopTest(t *testing.T, dataItem dataItem) {
 			t.Fatalf("failed to add qdisc netem for dev %s", dataItem.netemAttrs.Device)
 		}
 
-		resp, err := network.Stop(dataItem.netemAttrs.Device)
+		resp, err := network.Recover(dataItem.netemAttrs.Device)
 
 		assert.Nil(t, err)
 		assert.Regexp(t, dataItem.expectedResult.message, resp)
 	})
 }
 
-func Test_Network_Delay_Injection_Error_Non_Existing_Link_Stop(t *testing.T) {
+func Test_Network_Delay_Injection_Error_Non_Existing_Link_Recover(t *testing.T) {
 	netemAttrs := &v1.NetworkRequest{
 		Device: "non existing device",
 	}
 
 	network := New(logger)
-	resp, err := network.Stop(netemAttrs.Device)
+	resp, err := network.Recover(netemAttrs.Device)
 
 	assert.NotNil(t, err)
 	assert.Regexp(t, fmt.Sprintf("Could not get link %s", netemAttrs.Device), resp)
 }
 
 func Test_Network_Delay_Injection_Error_Can_Not_Del_If_There_Is_No_Qdisc_Registered_For_Dev(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping testing in short mode")
-	}
-
 	netemAttrs := &v1.NetworkRequest{
 		Device: "lo",
 	}
 
 	network := New(logger)
 
-	resp, err := network.Stop(netemAttrs.Device)
+	resp, err := network.Recover(netemAttrs.Device)
 	assert.NotNil(t, err)
 	assert.Regexp(t, fmt.Sprintf("Could not delete qdisc %s", netemAttrs.Device), resp)
 }
@@ -192,9 +178,9 @@ func getQdiscListSize(t *testing.T, device string) int {
 	return len(qdiscs)
 }
 func cleanUp(t *testing.T, network *Network, device string) {
-	_, err := network.Stop(device)
+	_, err := network.Recover(device)
 	if err != nil {
-		t.Fatalf("Could not stop qdisc %s", device)
+		t.Fatalf("Could not recover qdisc %s", device)
 	}
 
 	_ = level.Info(logger).Log("msg", "cleanup operation. Removed all network delays")
