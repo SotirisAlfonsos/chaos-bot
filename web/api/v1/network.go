@@ -10,12 +10,14 @@ import (
 	"go.opencensus.io/trace"
 )
 
+// NetworkManager is the rpc for network failure injections
 type NetworkManager struct {
 	Network *network.Network
 	Logger  log.Logger
 	*v1.UnimplementedNetworkServer
 }
 
+// NewNetworkManager will create the rpc for network failures with a logger attached
 func NewNetworkManager(logger log.Logger) *NetworkManager {
 	return &NetworkManager{
 		Network: network.New(logger),
@@ -23,6 +25,7 @@ func NewNetworkManager(logger log.Logger) *NetworkManager {
 	}
 }
 
+// Start a network injection according to the network request
 func (nm *NetworkManager) Start(ctx context.Context, req *v1.NetworkRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.network.Start")
 	defer span.End()
@@ -43,6 +46,7 @@ func (nm *NetworkManager) Start(ctx context.Context, req *v1.NetworkRequest) (*v
 	}
 }
 
+// Recover a network injection
 func (nm *NetworkManager) Recover(ctx context.Context, req *v1.NetworkRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.network.Stop")
 	defer span.End()

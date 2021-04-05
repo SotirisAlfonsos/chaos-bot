@@ -10,10 +10,12 @@ import (
 	"github.com/go-kit/kit/log/level"
 )
 
+// Server is the interface for server injections
 type Server interface {
 	StopUnix() (string, error)
 }
 
+// DefaultServer is the implementation of the Server interface for server injections
 type DefaultServer struct {
 	logger log.Logger
 }

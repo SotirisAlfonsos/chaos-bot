@@ -10,12 +10,14 @@ import (
 	"go.opencensus.io/trace"
 )
 
+// CPUManager is the rpc for cpu failures
 type CPUManager struct {
 	CPU    *cpu.CPU
 	Logger log.Logger
 	*v1.UnimplementedCPUServer
 }
 
+// Start a new cpu injection based on the percentage specified
 func (cm *CPUManager) Start(ctx context.Context, req *v1.CPURequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.cpu.Start")
 	defer span.End()
@@ -36,6 +38,7 @@ func (cm *CPUManager) Start(ctx context.Context, req *v1.CPURequest) (*v1.Status
 	}
 }
 
+// Recover the cpu injection
 func (cm *CPUManager) Recover(ctx context.Context, _ *v1.CPURequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.cpu.Stop")
 	defer span.End()

@@ -41,6 +41,7 @@ type ServiceHandler struct {
 	*v1.UnimplementedServiceServer
 }
 
+// NewServiceHandler will create the rpc for services management with a logger attached
 func NewServiceHandler(logger log.Logger) *ServiceHandler {
 	manager := &service.Service{
 		Logger: logger,
@@ -52,7 +53,7 @@ func NewServiceHandler(logger log.Logger) *ServiceHandler {
 	}
 }
 
-// Start a service based on the name
+// Recover a service based on the name
 func (sh *ServiceHandler) Recover(ctx context.Context, req *v1.ServiceRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.service.Start")
 	defer span.End()
@@ -73,7 +74,7 @@ func (sh *ServiceHandler) Recover(ctx context.Context, req *v1.ServiceRequest) (
 	}
 }
 
-// Stop a service based on the name
+// Kill a service based on the name
 func (sh *ServiceHandler) Kill(ctx context.Context, req *v1.ServiceRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.service.Stop")
 	defer span.End()
@@ -100,7 +101,7 @@ type DockerHandler struct {
 	*v1.UnimplementedDockerServer
 }
 
-// Start a docker container based on the name
+// Recover a docker container based on the name
 func (dh *DockerHandler) Recover(ctx context.Context, req *v1.DockerRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.docker.Start")
 	defer span.End()
@@ -122,7 +123,7 @@ func (dh *DockerHandler) Recover(ctx context.Context, req *v1.DockerRequest) (*v
 	}
 }
 
-// Stop a docker container based on the name
+// Kill a docker container based on the name
 func (dh *DockerHandler) Kill(ctx context.Context, req *v1.DockerRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.docker.Stop")
 	defer span.End()

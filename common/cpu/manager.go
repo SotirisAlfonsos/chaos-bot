@@ -54,7 +54,7 @@ func (cpu *CPU) Start(percentage int) (string, error) {
 	return constructStartMessage(cpu.logger, percentage), nil
 }
 
-// Start will recover cpu failure by closing all channels
+// Recover will recover cpu failure by closing all channels
 func (cpu *CPU) Recover() (string, error) {
 	cpu.mu.Lock()
 	defer cpu.mu.Unlock()

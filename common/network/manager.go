@@ -16,12 +16,14 @@ type Network struct {
 	Logger log.Logger
 }
 
+// New creates a new network struct with a logger
 func New(logger log.Logger) *Network {
 	return &Network{
 		Logger: logger,
 	}
 }
 
+// Start a network failure according to the netem attributes and the device specified
 func (n *Network) Start(netemAttrs *v1.NetworkRequest) (string, error) {
 	link, err := netlink.LinkByName(netemAttrs.Device)
 	if err != nil {
@@ -37,6 +39,7 @@ func (n *Network) Start(netemAttrs *v1.NetworkRequest) (string, error) {
 	return constructStartMessage(n.Logger, qdiscNetem), nil
 }
 
+// Recover all network failures on the device specified
 func (n *Network) Recover(device string) (string, error) {
 	link, err := netlink.LinkByName(device)
 	if err != nil {

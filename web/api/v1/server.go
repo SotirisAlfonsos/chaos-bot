@@ -10,12 +10,14 @@ import (
 	"go.opencensus.io/trace"
 )
 
+// ServerManager is the rpc for server failure injections
 type ServerManager struct {
 	Server server.Server
 	Logger log.Logger
 	*v1.UnimplementedServerServer
 }
 
+// Kill the server
 func (sm *ServerManager) Kill(ctx context.Context, _ *v1.ServerRequest) (*v1.StatusResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "v1.api.server.Kill")
 	defer span.End()
